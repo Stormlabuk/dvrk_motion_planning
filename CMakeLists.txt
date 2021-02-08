@@ -26,5 +26,5 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(single_point_test src/single_point_test.cpp)
-target_link_libraries(single_point_test ${catkin_LIBRARIES})
+add_executable(basic_io src/basic_io.cpp)
+target_link_libraries(basic_io ${catkin_LIBRARIES})

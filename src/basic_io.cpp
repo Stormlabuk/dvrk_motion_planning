@@ -78,7 +78,7 @@ int main (int argc, char** argv){
                                  kinematic_state->getLinkModel(joint_model_group->getLinkModelNames().back()),
                                  reference_point_position, jacobian);
     ROS_INFO_STREAM("Jacobian: \n" << jacobian << "\n");
-    
+
     while(ros::ok()){
 //        ROS_INFO("AAAAAAAAAAAA");
     }
