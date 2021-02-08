@@ -31,64 +31,54 @@ int main (int argc, char** argv){
     ROS_INFO("Model frame: %s", kinematic_model->getModelFrame().c_str());
 
     robot_state::RobotStatePtr kinematic_state(new robot_state::RobotState(kinematic_model));
-    kinematic_state->setToDefaultValues();
+//    kinematic_state->setToDefaultValues();
     const robot_state::JointModelGroup* joint_model_group = kinematic_model->getJointModelGroup(PLANNING_GROUP);
     const std::vector<std::string>& joint_names = joint_model_group->getVariableNames();
 
+    std::vector<double> joint_values;
+    kinematic_state->copyJointGroupPositions(joint_model_group, joint_values);
+    for (std::size_t i = 0; i < joint_names.size(); ++i)
+    {
+        ROS_INFO("Joint %s: %f", joint_names[i].c_str(), joint_values[i]);
+    }
 
+    joint_values[0] = 5.57;
+    kinematic_state->setJointGroupPositions(joint_model_group, joint_values);
+    ROS_INFO_STREAM("Current state is " << (kinematic_state->satisfiesBounds() ? "valid" : "not valid"));
 
+    kinematic_state->enforceBounds();
+    ROS_INFO_STREAM("Current state is " << (kinematic_state->satisfiesBounds() ? "valid" : "not valid"));
 
-    /*namespace rvt = rviz_visual_tools;
-    moveit_visual_tools::MoveItVisualTools visual_tools("world");
-    visual_tools.deleteAllMarkers();
+    kinematic_state->setToRandomPositions(joint_model_group);
 
-    visual_tools.loadRemoteControl();
+    const Eigen::Isometry3d& end_effector_state = kinematic_state->getGlobalLinkTransform("psm_tool_tip_link");
 
-    Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
-    text_pose.translation().z() = 1.75;
-    visual_tools.publishText(text_pose, "MoveGroupInterface Demo", rvt::WHITE, rvt::XLARGE);
+    ROS_INFO_STREAM("Translation: \n" << end_effector_state.translation() << "\n");
+    ROS_INFO_STREAM("Rotation: \n" << end_effector_state.rotation() << "\n");
 
-    visual_tools.trigger();
+    double timeout = 0.1;
+    bool found_ik = kinematic_state->setFromIK(joint_model_group, end_effector_state, timeout);
 
-    ROS_INFO_NAMED("tutorial", "Planning frame: %s", move_group.getPlanningFrame().c_str());
+    if (found_ik)
+    {
+        kinematic_state->copyJointGroupPositions(joint_model_group, joint_values);
+        for (std::size_t i = 0; i < joint_names.size(); ++i)
+        {
+            ROS_INFO("Joint %s: %f", joint_names[i].c_str(), joint_values[i]);
+        }
+    }
+    else
+    {
+        ROS_INFO("Did not find IK solution");
+    }
 
-    // We can also print the name of the end-effector link for this group.
-    ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group.getEndEffectorLink().c_str());
-
-    // We can get a list of all the groups in the robot:
-    ROS_INFO_NAMED("tutorial", "Available Planning Groups:");
-    std::copy(move_group.getJointModelGroupNames().begin(), move_group.getJointModelGroupNames().end(),
-              std::ostream_iterator<std::string>(std::cout, ", "));
-
-    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start the demo");
-
-    // Planning to a Pose goal
-    // ^^^^^^^^^^^^^^^^^^^^^^^
-    // We can plan a motion for this group to a desired pose for the
-    // end-effector.
-    geometry_msgs::Pose target_pose1;
-    target_pose1.orientation.w = 0.9659386;
-    target_pose1.position.x = 0;
-    target_pose1.position.y = 0;
-    target_pose1.position.z = - 0.2587713;
-    move_group.setPoseTarget(target_pose1);
-    move_group.setPlanningTime(15);
-    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-
-    bool success = (move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
-
-    ROS_INFO_NAMED("tutorial", "Visualizing plan 1 (pose goal) %s", success ? "" : "FAILED");
-
-    // Visualizing plans
-    // ^^^^^^^^^^^^^^^^^
-    // We can also visualize the plan as a line with markers in RViz.
-    ROS_INFO_NAMED("tutorial", "Visualizing plan 1 as trajectory line");
-    visual_tools.publishAxisLabeled(target_pose1, "pose1");
-    visual_tools.publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
-    visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
-    visual_tools.trigger();
-*/
-
+    Eigen::Vector3d reference_point_position(0.0, 0.0, 0.0);
+    Eigen::MatrixXd jacobian;
+    kinematic_state->getJacobian(joint_model_group,
+                                 kinematic_state->getLinkModel(joint_model_group->getLinkModelNames().back()),
+                                 reference_point_position, jacobian);
+    ROS_INFO_STREAM("Jacobian: \n" << jacobian << "\n");
+    
     while(ros::ok()){
 //        ROS_INFO("AAAAAAAAAAAA");
     }
