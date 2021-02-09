@@ -31,3 +31,6 @@ target_link_libraries(basic_io ${catkin_LIBRARIES})
 
 add_executable(basic_planning src/basic_planning.cpp)
 target_link_libraries(basic_planning ${catkin_LIBRARIES})
+
+add_executable(ros_planning src/ros_planning.cpp)
+target_link_libraries(ros_planning ${catkin_LIBRARIES})
