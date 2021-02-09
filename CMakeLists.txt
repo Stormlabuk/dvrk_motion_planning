@@ -28,3 +28,6 @@ include_directories(
 
 add_executable(basic_io src/basic_io.cpp)
 target_link_libraries(basic_io ${catkin_LIBRARIES})
+
+add_executable(basic_planning src/basic_planning.cpp)
+target_link_libraries(basic_planning ${catkin_LIBRARIES})
