@@ -34,3 +34,6 @@ target_link_libraries(basic_planning ${catkin_LIBRARIES})
 
 add_executable(ros_planning src/ros_planning.cpp)
 target_link_libraries(ros_planning ${catkin_LIBRARIES})
+
+add_executable(move_planning src/move_planning.cpp)
+target_link_libraries(move_planning ${catkin_LIBRARIES})
