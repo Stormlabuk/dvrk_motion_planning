@@ -37,3 +37,6 @@ target_link_libraries(ros_planning ${catkin_LIBRARIES})
 
 add_executable(move_planning src/move_planning.cpp)
 target_link_libraries(move_planning ${catkin_LIBRARIES})
+
+add_executable(go2point src/go2point.cpp)
+target_link_libraries(go2point ${catkin_LIBRARIES})
