@@ -2,15 +2,19 @@
 #include <ros/ros.h>
 
 // MoveIt
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include <moveit/planning_interface/planning_interface.h>
-#include <moveit/planning_scene/planning_scene.h>
-#include <moveit/kinematic_constraints/utils.h>
-#include <moveit_msgs/DisplayTrajectory.h>
-#include <moveit_msgs/PlanningScene.h>
+#include <moveit/planning_scene_interface/planning_scene_interface.h>
+#include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit_visual_tools/moveit_visual_tools.h>
+//#include <moveit/robot_model_loader/robot_model_loader.h>
+//#include <moveit/planning_interface/planning_interface.h>
+//#include <moveit/planning_scene/planning_scene.h>
+//#include <moveit/kinematic_constraints/utils.h>
+//#include <moveit_msgs/DisplayTrajectory.h>
+//#include <moveit_msgs/PlanningScene.h>
 
-#include <boost/scoped_ptr.hpp>
+//
+//
+//#include <boost/scoped_ptr.hpp>
 
 int main(int argc, char** argv) {
 
@@ -21,58 +25,71 @@ int main(int argc, char** argv) {
     ros::NodeHandle node_handle("~");
 
     // Create a RobotState and JointModelGroup to keep track of the current robot pose and planning group
-    const std::string PLANNING_GROUP = "psm_arm";
-    robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
-    robot_model::RobotModelPtr robot_model = robot_model_loader.getModel();
-    robot_state::RobotStatePtr robot_state(new robot_state::RobotState(robot_model));
-    const robot_state::JointModelGroup *joint_model_group = robot_state->getJointModelGroup(PLANNING_GROUP);
+    const std::string PLANNING_GROUP = "psm_arm"; // move group name
+    moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP); // definition of current move_group
+    moveit::planning_interface::PlanningSceneInterface planning_scene_interface; // collisions and external objects
+    const robot_state::JointModelGroup* joint_model_group =
+            move_group.getCurrentState()->getJointModelGroup(PLANNING_GROUP);// pointer for improved performance
 
-    planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
-    planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
+    Eigen::Affine3d text_pose = Eigen::Affine3d::Identity();
+    text_pose.translation().z() = 1.75;
 
-    // Load plugin planner
-    boost::scoped_ptr<pluginlib::ClassLoader<planning_interface::PlannerManager>> planner_plugin_loader;
-    planning_interface::PlannerManagerPtr planner_instance;
-    std::string planner_plugin_name;
-
-    // Handle plugin boot
-    if (!node_handle.getParam("/move_group/planning_plugin", planner_plugin_name))
-        ROS_FATAL_STREAM("Could not find planner plugin name");
-    try {
-        planner_plugin_loader.reset(new pluginlib::ClassLoader<planning_interface::PlannerManager>(
-                "moveit_core", "planning_interface::PlannerManager"));
-    }
-    catch (pluginlib::PluginlibException &ex) {
-        ROS_FATAL_STREAM("Exception while creating planning plugin loader " << ex.what());
-    }
-    try {
-        planner_instance.reset(planner_plugin_loader->createUnmanagedInstance(planner_plugin_name));
-        if (!planner_instance->initialize(robot_model, node_handle.getNamespace()))
-            ROS_FATAL_STREAM("Could not initialize planner instance");
-        ROS_INFO_STREAM("Using planning interface '" << planner_instance->getDescription() << "'");
-    }
-    catch (pluginlib::PluginlibException &ex) {
-        const std::vector<std::string> &classes = planner_plugin_loader->getDeclaredClasses();
-        std::stringstream ss;
-        for (std::size_t i = 0; i < classes.size(); ++i)
-            ss << classes[i] << " ";
-        ROS_ERROR_STREAM("Exception while loading planner '" << planner_plugin_name << "': " << ex.what() << std::endl
-                                                             << "Available plugins: " << ss.str());
-    }
-
-    // Setup of the rviz scene
+    // RViz Visual Tools
     namespace rvt = rviz_visual_tools;
     moveit_visual_tools::MoveItVisualTools visual_tools("world");
-    visual_tools.loadRobotStatePub("/display_robot_state");
-    visual_tools.enableBatchPublishing();
-    visual_tools.deleteAllMarkers();  // clear all old markers
+    visual_tools.deleteAllMarkers();
+    visual_tools.loadRemoteControl(); // load RVizVisualToolsGui
     visual_tools.trigger();
 
-    visual_tools.loadRemoteControl();
+    geometry_msgs::Pose tpose_1;
+    tpose_1.orientation.w = 1.0;
+    tpose_1.position.x = 0.05;
+    tpose_1.position.y = 0.05;
+    tpose_1.position.z = -0.15;
+    move_group.setPoseTarget(tpose_1);
 
-    // Batch publishing is used to reduce the number of messages being sent to RViz for large visualizations
+//    geometry_msgs::Pose tpose_2;
+//    tpose_2.position.x = 0.1;
+//    tpose_2.position.y = 0.1;
+//    tpose_2.position.z = -0.1;
+//    tpose_2.orientation.w = 1.0;
+//    move_group.push_back(tpose_2);
+
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+
+    bool success = (move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    ROS_INFO_NAMED("tutorial", "Visualizing plan 1 (pose goal) %s", success ? "" : "FAILED");
+
+    ROS_INFO_NAMED("tutorial", "Visualizing plan 1 as trajectory line");
+    visual_tools.publishAxisLabeled(tpose_1, "pose1");
+    visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
     visual_tools.trigger();
-    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start the demo");
+    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
 
-    std::vector<geometry_msgs::PoseStamped>
+
+//    std::vector<geometry_msgs::Pose> waypoints;
+//
+//    // First point
+//    geometry_msgs::Pose pose_1;
+//    pose_1.position.x = 0.05;
+//    pose_1.position.y = 0.05;
+//    pose_1.position.z = -0.15;
+//    pose_1.orientation.w = 1.0;
+//    waypoints.push_back(pose_1);
+//
+//    geometry_msgs::Pose pose_2;
+//
+//    pose_2.position.x = 0.1;
+//    pose_2.position.y = 0.1;
+//    pose_2.position.z = -0.1;
+//    pose_2.orientation.w = 1.0;
+//    waypoints.push_back(pose_2);
+//
+//    moveit_msgs::RobotTrajectory trajectory;
+//    double fraction = move_group.computeCartesianPath(waypoints,
+//                                                 0.01,  // eef_step
+//                                                 0.0,   // jump_threshold
+//                                                 trajectory);
+
+
 }
