@@ -20,21 +20,22 @@ int main(int argc, char** argv) {
     spinner.start();
     ros::NodeHandle node_handle("~");
 
+    // Create a RobotState and JointModelGroup to keep track of the current robot pose and planning group
     const std::string PLANNING_GROUP = "psm_arm";
     robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
     robot_model::RobotModelPtr robot_model = robot_model_loader.getModel();
-    /* Create a RobotState and JointModelGroup to keep track of the current robot pose and planning group*/
     robot_state::RobotStatePtr robot_state(new robot_state::RobotState(robot_model));
     const robot_state::JointModelGroup* joint_model_group = robot_state->getJointModelGroup(PLANNING_GROUP);
 
     planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
-
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
 
+    // Load plugin planner
     boost::scoped_ptr<pluginlib::ClassLoader<planning_interface::PlannerManager>> planner_plugin_loader;
     planning_interface::PlannerManagerPtr planner_instance;
     std::string planner_plugin_name;
 
+    // Handle plugin boot
     if (!node_handle.getParam("/move_group/planning_plugin", planner_plugin_name))
         ROS_FATAL_STREAM("Could not find planner plugin name");
     try
@@ -63,6 +64,7 @@ int main(int argc, char** argv) {
                                                              << "Available plugins: " << ss.str());
     }
 
+    // Setup of the rviz scene
     namespace rvt = rviz_visual_tools;
     moveit_visual_tools::MoveItVisualTools visual_tools("world");
     visual_tools.loadRobotStatePub("/display_robot_state");
@@ -72,14 +74,13 @@ int main(int argc, char** argv) {
 
     visual_tools.loadRemoteControl();
 
-    Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
-    text_pose.translation().z() = 1.75;
-    visual_tools.publishText(text_pose, "Motion Planning API Demo", rvt::WHITE, rvt::XLARGE);
-
-    /* Batch publishing is used to reduce the number of messages being sent to RViz for large visualizations */
+    // Batch publishing is used to reduce the number of messages being sent to RViz for large visualizations
     visual_tools.trigger();
     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start the demo");
 
+    // ################
+    // ### PLANNING ###
+    // ################
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
     visual_tools.trigger();
     planning_interface::MotionPlanRequest req;
@@ -90,7 +91,7 @@ int main(int argc, char** argv) {
     pose.pose.position.y = 0.05;
     pose.pose.position.z = -0.15;
     pose.pose.orientation.w = 1.0;
-//
+
     std::vector<double> tolerance_pose(3, 0.01);
     std::vector<double> tolerance_angle(3, 0.01);
 
@@ -100,28 +101,22 @@ int main(int argc, char** argv) {
     req.group_name = PLANNING_GROUP;
     req.goal_constraints.push_back(pose_goal);
 
-    // We now construct a planning context that encapsulate the scene,
-    // the request and the response. We call the planner using this
-    // planning context
-    planning_interface::PlanningContextPtr context =
-            planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
+
+    planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
     context->solve(res);
     if (res.error_code_.val != res.error_code_.SUCCESS)
     {
         ROS_ERROR("Could not compute plan successfully");
         return 0;
     }
-//
-//    // Visualize the result
-//    // ^^^^^^^^^^^^^^^^^^^^
+
     ros::Publisher display_publisher =
             node_handle.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
     moveit_msgs::DisplayTrajectory display_trajectory;
 
-//    /* Visualize the trajectory */
+    // Trajectory visualization
     moveit_msgs::MotionPlanResponse response;
     res.getMessage(response);
-//
     display_trajectory.trajectory_start = response.trajectory_start;
     display_trajectory.trajectory.push_back(response.trajectory);
     visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), joint_model_group);
@@ -133,11 +128,49 @@ int main(int argc, char** argv) {
 
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
     visual_tools.publishAxisLabeled(pose.pose, "goal_1");
-    visual_tools.publishText(text_pose, "Pose Goal (1)", rvt::WHITE, rvt::XLARGE);
     visual_tools.trigger();
 
-/* We can also use visual_tools to wait for user input */
     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+
+    // Second target and planning
+    geometry_msgs::PoseStamped pose_end;
+    pose_end.header.frame_id = "world";
+    pose_end.pose.position.x = 0.1;
+    pose_end.pose.position.y = 0.1;
+    pose_end.pose.position.z = -0.10;
+    pose_end.pose.orientation.w = 1.0;
+
+    moveit_msgs::Constraints pose_goal_end =
+            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
+
+    req.goal_constraints.clear();
+    req.goal_constraints.push_back(pose_goal_end);
+    context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
+    context->solve(res);
+
+    if (res.error_code_.val != res.error_code_.SUCCESS)
+    {
+        ROS_ERROR("Could not compute plan successfully");
+        return 0;
+    }
+
+    res.getMessage(response);
+    display_trajectory.trajectory.push_back(response.trajectory);
+    visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), joint_model_group);
+    visual_tools.trigger();
+    display_publisher.publish(display_trajectory);
+
+    robot_state->setJointGroupPositions(joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
+    planning_scene->setCurrentState(*robot_state.get());
+
+    // Display the goal state
+    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
+    visual_tools.publishAxisLabeled(pose_end.pose, "goal_2");
+    visual_tools.trigger();
+
+    /* Wait for user input */
+    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+
 
 
 
