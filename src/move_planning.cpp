@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
     planning_interface::MotionPlanRequest req;
     planning_interface::MotionPlanResponse res;
     geometry_msgs::PoseStamped pose;
-    pose.header.frame_id = "world";
+//    pose.header.frame_id = "world";
     pose.pose.position.x = 0.05;
     pose.pose.position.y = 0.05;
     pose.pose.position.z = -0.15;
@@ -130,7 +130,6 @@ int main(int argc, char** argv) {
 
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
     visual_tools.publishAxisLabeled(pose.pose, "goal_1");
-//    visual_tools.publishAxisLabeled(pose_end.pose, "goal_2");
 
     visual_tools.trigger();
 
