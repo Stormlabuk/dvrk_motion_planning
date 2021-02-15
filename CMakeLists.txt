@@ -40,3 +40,6 @@ target_link_libraries(move_planning ${catkin_LIBRARIES})
 
 add_executable(go2point src/go2point.cpp)
 target_link_libraries(go2point ${catkin_LIBRARIES})
+
+add_executable(waypoints_trajectory src/waypoints_trajectory.cpp)
+target_link_libraries(waypoints_trajectory ${catkin_LIBRARIES})

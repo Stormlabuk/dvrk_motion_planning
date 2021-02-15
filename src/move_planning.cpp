@@ -92,11 +92,13 @@ int main(int argc, char** argv) {
     pose.pose.position.z = -0.15;
     pose.pose.orientation.w = 1.0;
 
+
     std::vector<double> tolerance_pose(3, 0.01);
     std::vector<double> tolerance_angle(3, 0.01);
 
     moveit_msgs::Constraints pose_goal =
             kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose, tolerance_pose, tolerance_angle);
+
 
     req.group_name = PLANNING_GROUP;
     req.goal_constraints.push_back(pose_goal);
@@ -128,48 +130,50 @@ int main(int argc, char** argv) {
 
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
     visual_tools.publishAxisLabeled(pose.pose, "goal_1");
+//    visual_tools.publishAxisLabeled(pose_end.pose, "goal_2");
+
     visual_tools.trigger();
 
     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
 
     // Second target and planning
-    geometry_msgs::PoseStamped pose_end;
-    pose_end.header.frame_id = "world";
-    pose_end.pose.position.x = 0.1;
-    pose_end.pose.position.y = 0.1;
-    pose_end.pose.position.z = -0.10;
-    pose_end.pose.orientation.w = 1.0;
-
-    moveit_msgs::Constraints pose_goal_end =
-            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
-
-    req.goal_constraints.clear();
-    req.goal_constraints.push_back(pose_goal_end);
-    context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
-    context->solve(res);
-
-    if (res.error_code_.val != res.error_code_.SUCCESS)
-    {
-        ROS_ERROR("Could not compute plan successfully");
-        return 0;
-    }
-
-    res.getMessage(response);
-    display_trajectory.trajectory.push_back(response.trajectory);
-    visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), joint_model_group);
-    visual_tools.trigger();
-    display_publisher.publish(display_trajectory);
-
-    robot_state->setJointGroupPositions(joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
-    planning_scene->setCurrentState(*robot_state.get());
-
-    // Display the goal state
-    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
-    visual_tools.publishAxisLabeled(pose_end.pose, "goal_2");
-    visual_tools.trigger();
-
-    /* Wait for user input */
-    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+//    geometry_msgs::PoseStamped pose_end;
+//    pose_end.header.frame_id = "world";
+//    pose_end.pose.position.x = 0.1;
+//    pose_end.pose.position.y = 0.1;
+//    pose_end.pose.position.z = -0.10;
+//    pose_end.pose.orientation.w = 1.0;
+//
+//    moveit_msgs::Constraints pose_goal_end =
+//            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
+//
+//    req.goal_constraints.clear();
+//    req.goal_constraints.push_back(pose_goal_end);
+//    context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
+//    context->solve(res);
+//
+//    if (res.error_code_.val != res.error_code_.SUCCESS)
+//    {
+//        ROS_ERROR("Could not compute plan successfully");
+//        return 0;
+//    }
+//
+//    res.getMessage(response);
+//    display_trajectory.trajectory.push_back(response.trajectory);
+//    visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), joint_model_group);
+//    visual_tools.trigger();
+//    display_publisher.publish(display_trajectory);
+//
+//    robot_state->setJointGroupPositions(joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
+//    planning_scene->setCurrentState(*robot_state.get());
+//
+//    // Display the goal state
+//    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
+//    visual_tools.publishAxisLabeled(pose_end.pose, "goal_2");
+//    visual_tools.trigger();
+//
+//    /* Wait for user input */
+//    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
 
 
 
