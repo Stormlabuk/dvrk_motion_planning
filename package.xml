@@ -8,7 +8,17 @@
 
   <license>TODO</license>
 
+  <build_depend>trajectory_msgs</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>moveit_core</build_depend>
+  <build_depend>moveit_ros_planning</build_depend>
+  <build_depend>industrial_trajectory_filters</build_depend>
 
+  <exec_depend>trajectory_msgs</exec_depend>
+  <exec_depend>pluginlib</exec_depend>
+  <exec_depend>moveit_core</exec_depend>
+  <exec_depend>moveit_ros_planning</exec_depend>
+  <exec_depend>industrial_trajectory_filters</exec_depend>
 
 
   <buildtool_depend>catkin</buildtool_depend>
