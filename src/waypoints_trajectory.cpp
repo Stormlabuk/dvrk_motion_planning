@@ -18,7 +18,7 @@
 
 int main(int argc, char** argv) {
 
-    const std::string node_name = "motion_planning_tutorial";
+    const std::string node_name = "waypoints_trajectory";
     ros::init(argc, argv, node_name);
     ros::AsyncSpinner spinner(1);
     spinner.start();
@@ -41,55 +41,45 @@ int main(int argc, char** argv) {
     visual_tools.loadRemoteControl(); // load RVizVisualToolsGui
     visual_tools.trigger();
 
+    robot_state::RobotState start_state(*move_group.getCurrentState());
+
+    // Waypoints definition
+    std::vector<geometry_msgs::Pose> waypoints;
     geometry_msgs::Pose tpose_1;
     tpose_1.orientation.w = 1.0;
     tpose_1.position.x = 0.05;
     tpose_1.position.y = 0.05;
     tpose_1.position.z = -0.15;
-    move_group.setPoseTarget(tpose_1);
+    start_state.setFromIK(joint_model_group, tpose_1);
+    move_group.setStartState(start_state);
+    waypoints.push_back(tpose_1);
 
-//    geometry_msgs::Pose tpose_2;
-//    tpose_2.position.x = 0.1;
-//    tpose_2.position.y = 0.1;
-//    tpose_2.position.z = -0.1;
-//    tpose_2.orientation.w = 1.0;
-//    move_group.push_back(tpose_2);
+    geometry_msgs::Pose tpose_2;
+    tpose_2.position.x = 0.1;
+    tpose_2.position.y = 0.1;
+    tpose_2.position.z = -0.1;
+    tpose_2.orientation.w = 1.0;
+    waypoints.push_back(tpose_2);
 
-    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    geometry_msgs::Pose tpose_3;
+    tpose_3.position.x = 0.0;
+    tpose_3.position.y = 0.0;
+    tpose_3.position.z = 0.0;
+    tpose_3.orientation.w = 1.0;
+    waypoints.push_back(tpose_3);
 
-    bool success = (move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
-    ROS_INFO_NAMED("tutorial", "Visualizing plan 1 (pose goal) %s", success ? "" : "FAILED");
+    move_group.setMaxVelocityScalingFactor(0.1);
 
-    ROS_INFO_NAMED("tutorial", "Visualizing plan 1 as trajectory line");
-    visual_tools.publishAxisLabeled(tpose_1, "pose1");
-    visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
+    moveit_msgs::RobotTrajectory trajectory;
+    const double jump_threshold = 0.0;
+    const double eef_step = 0.01;
+    double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+
+    visual_tools.deleteAllMarkers();
+    visual_tools.publishPath(waypoints, rvt::LIME_GREEN, rvt::SMALL);
+    for (std::size_t i = 0; i < waypoints.size(); ++i)
+        visual_tools.publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
     visual_tools.trigger();
     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
-
-
-//    std::vector<geometry_msgs::Pose> waypoints;
-//
-//    // First point
-//    geometry_msgs::Pose pose_1;
-//    pose_1.position.x = 0.05;
-//    pose_1.position.y = 0.05;
-//    pose_1.position.z = -0.15;
-//    pose_1.orientation.w = 1.0;
-//    waypoints.push_back(pose_1);
-//
-//    geometry_msgs::Pose pose_2;
-//
-//    pose_2.position.x = 0.1;
-//    pose_2.position.y = 0.1;
-//    pose_2.position.z = -0.1;
-//    pose_2.orientation.w = 1.0;
-//    waypoints.push_back(pose_2);
-//
-//    moveit_msgs::RobotTrajectory trajectory;
-//    double fraction = move_group.computeCartesianPath(waypoints,
-//                                                 0.01,  // eef_step
-//                                                 0.0,   // jump_threshold
-//                                                 trajectory);
-
 
 }
