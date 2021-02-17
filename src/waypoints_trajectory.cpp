@@ -43,13 +43,15 @@ int main(int argc, char** argv) {
 
     robot_state::RobotState start_state(*move_group.getCurrentState());
 
+
+
     // Waypoints definition
     std::vector<geometry_msgs::Pose> waypoints;
     geometry_msgs::Pose tpose_1;
-    tpose_1.orientation.w = 1.0;
     tpose_1.position.x = 0.05;
     tpose_1.position.y = 0.05;
     tpose_1.position.z = -0.15;
+    tpose_1.orientation.w = 0.08;
     start_state.setFromIK(joint_model_group, tpose_1);
     move_group.setStartState(start_state);
     waypoints.push_back(tpose_1);
@@ -65,7 +67,7 @@ int main(int argc, char** argv) {
     tpose_3.position.x = 0.0;
     tpose_3.position.y = 0.0;
     tpose_3.position.z = 0.0;
-    tpose_3.orientation.w = 1.0;
+    tpose_3.orientation.w = 0.5;
     waypoints.push_back(tpose_3);
 
     move_group.setMaxVelocityScalingFactor(0.1);
