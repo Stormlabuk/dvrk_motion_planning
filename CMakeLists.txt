@@ -13,11 +13,10 @@ find_package(catkin REQUIRED
         geometric_shapes
         pcl_ros
         pcl_conversions
-        rosbag
         tf2_ros
         tf2_eigen
         tf2_geometry_msgs
-        industrial_trajectory_filters
+        stomp_moveit
 )
 
 catkin_package(
@@ -45,6 +44,6 @@ target_link_libraries(go2point ${catkin_LIBRARIES})
 add_executable(waypoints_trajectory src/waypoints_trajectory.cpp)
 target_link_libraries(waypoints_trajectory ${catkin_LIBRARIES})
 
-add_executable(spline_planning src/spline_planning.cpp)
-target_link_libraries(spline_planning ${catkin_LIBRARIES})
+# add_executable(spline_planning src/spline_planning.cpp)
+# target_link_libraries(spline_planning ${catkin_LIBRARIES})
 
