@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     try
     {
         planner_plugin_loader.reset(new pluginlib::ClassLoader<planning_interface::PlannerManager>(
-                "stomp_core", "planning_interface::PlannerManager")); // !!!!!!!!!!!!!!! Controllare field package (forse ci va stomp_ros)
+                "moveit_core", "planning_interface::PlannerManager")); // !!!!!!!!!!!!!!! Controllare field package (forse ci va stomp_ros)
     }
     catch (pluginlib::PluginlibException& ex)
     {
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
     tpose_1.position.x = 0.05;
     tpose_1.position.y = 0.05;
     tpose_1.position.z = -0.15;
-    tpose_1.orientation.w = 0.08;
+    tpose_1.orientation.w = 0.8;
     waypoints.push_back(tpose_1);
 
     geometry_msgs::Pose tpose_2;
@@ -114,8 +114,8 @@ int main(int argc, char** argv) {
     tpose_3.position.x = 0.0;
     tpose_3.position.y = 0.0;
     tpose_3.position.z = 0.0;
-    tpose_3.orientation.w = 0.5;
-    waypoints.push_back(tpose_3);
+    tpose_3.orientation.w = 1;
+//    waypoints.push_back(tpose_3);
 
     move_group.setMaxVelocityScalingFactor(0.1);
 
@@ -124,11 +124,56 @@ int main(int argc, char** argv) {
     const double eef_step = 0.01;
     double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
-    req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
+    geometry_msgs::PoseStamped pose_end;
+    pose_end.header.frame_id = "world";
+    pose_end.pose = tpose_2;
+    std::vector<double> tolerance_pose(3, 0.01);
+    std::vector<double> tolerance_angle(3, 0.01);
 
+    geometry_msgs::PoseStamped wp1;
+    wp1.header.frame_id = "world";
+    wp1.pose = tpose_1;
+
+    robot_state::RobotState start_state(*move_group.getCurrentState());
+    start_state.setFromIK(joint_model_group, tpose_3);
+    move_group.setStartState(start_state);
+
+    moveit_msgs::Constraints pose_goal_end =
+            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
+
+    moveit_msgs::Constraints path_cons =
+            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", wp1, tolerance_pose, tolerance_angle);
+
+//    req.goal_constraints.push_back(wp_goal);
+    req.goal_constraints.push_back(pose_goal_end);
+    req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
+//    req.path_constraints = path_cons;
     planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
     context->setMotionPlanRequest(req);
     context->solve(res);
+
+    ros::Publisher display_publisher =
+            node_handle.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
+    moveit_msgs::DisplayTrajectory display_trajectory;
+
+    moveit_msgs::MotionPlanResponse response;
+    res.getMessage(response);
+    display_trajectory.trajectory_start = response.trajectory_start;
+    display_trajectory.trajectory.push_back(response.trajectory);
+    visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), joint_model_group);
+    visual_tools.trigger();
+    display_publisher.publish(display_trajectory);
+
+    robot_state->setJointGroupPositions(joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
+    planning_scene->setCurrentState(*robot_state.get());
+
+    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
+    visual_tools.publishAxisLabeled(tpose_1, "goal_1");
+    visual_tools.publishAxisLabeled(tpose_2, "goal_2");
+    visual_tools.publishAxisLabeled(tpose_3, "goal_3");
+
+    visual_tools.trigger();
+
 
     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
 
