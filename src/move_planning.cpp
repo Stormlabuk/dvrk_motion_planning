@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     try
     {
         planner_plugin_loader.reset(new pluginlib::ClassLoader<planning_interface::PlannerManager>(
-                "moveit_core", "planning_interface::PlannerManager"));
+                "moveit_core", "planning_interface::PlannerManager")); // !!!!!!!!!!!!!!! Controllare field package (forse ci va stomp_ros)
     }
     catch (pluginlib::PluginlibException& ex)
     {
@@ -64,7 +64,9 @@ int main(int argc, char** argv) {
                                                              << "Available plugins: " << ss.str());
     }
 
-    // Setup of the rviz scene
+    // ################
+    // ### VISUALIS ###
+    // ################
     namespace rvt = rviz_visual_tools;
     moveit_visual_tools::MoveItVisualTools visual_tools("world");
     visual_tools.loadRobotStatePub("/display_robot_state");
@@ -76,7 +78,6 @@ int main(int argc, char** argv) {
 
     // Batch publishing is used to reduce the number of messages being sent to RViz for large visualizations
     visual_tools.trigger();
-    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to start the demo");
 
     // ################
     // ### PLANNING ###
@@ -85,6 +86,8 @@ int main(int argc, char** argv) {
     visual_tools.trigger();
     planning_interface::MotionPlanRequest req;
     planning_interface::MotionPlanResponse res;
+
+
     geometry_msgs::PoseStamped pose;
 //    pose.header.frame_id = "world";
     pose.pose.position.x = 0.05;
