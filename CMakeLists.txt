@@ -44,6 +44,6 @@ target_link_libraries(go2point ${catkin_LIBRARIES})
 add_executable(waypoints_trajectory src/waypoints_trajectory.cpp)
 target_link_libraries(waypoints_trajectory ${catkin_LIBRARIES})
 
-# add_executable(spline_planning src/spline_planning.cpp)
-# target_link_libraries(spline_planning ${catkin_LIBRARIES})
+add_executable(spline_planning src/spline_planning.cpp)
+target_link_libraries(spline_planning ${catkin_LIBRARIES})
 
