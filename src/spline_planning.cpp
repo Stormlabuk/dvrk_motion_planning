@@ -1,5 +1,6 @@
 #include <pluginlib/class_loader.h>
 #include <ros/ros.h>
+#include <stomp_moveit/stomp_planner.h>
 
 // MoveIt!
 #include <moveit/robot_model_loader/robot_model_loader.h>
@@ -18,38 +19,80 @@
 
 int main(int argc, char** argv) {
 
-    const std::string node_name = "waypoints_trajectory";
+    const std::string node_name = "motion_planning_tutorial";
     ros::init(argc, argv, node_name);
     ros::AsyncSpinner spinner(1);
     spinner.start();
     ros::NodeHandle node_handle("~");
 
+    const std::string PLANNING_GROUP = "psm_arm";
+    moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
+
     robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
     robot_model::RobotModelPtr robot_model = robot_model_loader.getModel();
-    moveit::planning_interface::MoveGroupInterface move_group("psm_arm"); // definition of current move_group
-    planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
-    planning_pipeline::PlanningPipelinePtr planning_pipeline(
-            new planning_pipeline::PlanningPipeline(robot_model, node_handle, "planning_plugin", "request_adapters"));
-    const robot_state::JointModelGroup* joint_model_group =
-            move_group.getCurrentState()->getJointModelGroup("psm_arm");// pointer for improved performance
-    robot_state::RobotState start_state(*move_group.getCurrentState());
+    robot_state::RobotStatePtr robot_state(new robot_state::RobotState(robot_model));
+    const robot_state::JointModelGroup* joint_model_group = robot_state->getJointModelGroup(PLANNING_GROUP);
 
+    planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
+    planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
+
+    // Load plugin planner
+    boost::scoped_ptr<pluginlib::ClassLoader<planning_interface::PlannerManager>> planner_plugin_loader;
+    planning_interface::PlannerManagerPtr planner_instance;
+    std::string planner_plugin_name;
+
+    // Handle plugin boot
+    if (!node_handle.getParam("/move_group/planning_plugin", planner_plugin_name))
+        ROS_FATAL_STREAM("Could not find planner plugin name");
+    try
+    {
+        planner_plugin_loader.reset(new pluginlib::ClassLoader<planning_interface::PlannerManager>(
+                "stomp_core", "planning_interface::PlannerManager")); // !!!!!!!!!!!!!!! Controllare field package (forse ci va stomp_ros)
+    }
+    catch (pluginlib::PluginlibException& ex)
+    {
+        ROS_FATAL_STREAM("Exception while creating planning plugin loader " << ex.what());
+    }
+    try
+    {
+        planner_instance.reset(planner_plugin_loader->createUnmanagedInstance(planner_plugin_name));
+        if (!planner_instance->initialize(robot_model, node_handle.getNamespace()))
+            ROS_FATAL_STREAM("Could not initialize planner instance");
+        ROS_INFO_STREAM("Using planning interface '" << planner_instance->getDescription() << "'");
+    }
+    catch (pluginlib::PluginlibException& ex)
+    {
+        const std::vector<std::string>& classes = planner_plugin_loader->getDeclaredClasses();
+        std::stringstream ss;
+        for (std::size_t i = 0; i < classes.size(); ++i)
+            ss << classes[i] << " ";
+        ROS_ERROR_STREAM("Exception while loading planner '" << planner_plugin_name << "': " << ex.what() << std::endl
+                                                             << "Available plugins: " << ss.str());
+    }
+
+    // ################
+    // ### VISUALIS ###
+    // ################
     namespace rvt = rviz_visual_tools;
-    moveit_visual_tools::MoveItVisualTools visual_tools("panda_link0");
-    visual_tools.deleteAllMarkers();
+    moveit_visual_tools::MoveItVisualTools visual_tools("world");
+    visual_tools.loadRobotStatePub("/display_robot_state");
+    visual_tools.enableBatchPublishing();
+    visual_tools.deleteAllMarkers();  // clear all old markers
+    visual_tools.trigger();
 
     visual_tools.loadRemoteControl();
 
+    // Batch publishing is used to reduce the number of messages being sent to RViz for large visualizations
     visual_tools.trigger();
-    ros::Duration(10).sleep();
 
+    // ################
+    // ### PLANNING ###
+    // ################
+    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
+    visual_tools.trigger();
     planning_interface::MotionPlanRequest req;
+    req.group_name = PLANNING_GROUP;
     planning_interface::MotionPlanResponse res;
-
-    req.group_name = "psm_arm";
-
-    std::vector<double> tolerance_pose(3, 0.01);
-    std::vector<double> tolerance_angle(3, 0.01);
 
     // Waypoints definition
     std::vector<geometry_msgs::Pose> waypoints;
@@ -58,9 +101,6 @@ int main(int argc, char** argv) {
     tpose_1.position.y = 0.05;
     tpose_1.position.z = -0.15;
     tpose_1.orientation.w = 0.08;
-
-    start_state.setFromIK(joint_model_group, tpose_1);
-    move_group.setStartState(start_state);
     waypoints.push_back(tpose_1);
 
     geometry_msgs::Pose tpose_2;
@@ -84,15 +124,13 @@ int main(int argc, char** argv) {
     const double eef_step = 0.01;
     double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
-#include <movmoveit_msgs::MotionPlanResponse response;eit/robot_model_loader/robot_model_loader.h>
-#include <moveit/planning_pipeline/planning_pipeline.h>
-#include <moveit/planning_interface/planning_interface.h>
-#include <moveit/kinematic_constraints/utils.h>
-#include <moveit_msgs/DisplayTrajectory.h>
-#include <moveit_msgs/PlanningScene.h>
-#include <moveit_visual_tools/moveit_visual_tools.h>moveit_msgs::MotionPlanResponse response;moveit_msgs::MotionPlanResponse response;
+    req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
 
-    robot_state = planning_scene->getCurrentStateNonConst();
-    planning_scene->setCurrentState(response.trajectory_start);
-    robot_state.setJointGroupPositions(joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
+    planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
+    context->setMotionPlanRequest(req);
+    context->solve(res);
+
+    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+
 }
+
