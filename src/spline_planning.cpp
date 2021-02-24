@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 
     planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
-
+    move_group.setPlanningTime(5);
     // Load plugin planner
     boost::scoped_ptr<pluginlib::ClassLoader<planning_interface::PlannerManager>> planner_plugin_loader;
     planning_interface::PlannerManagerPtr planner_instance;
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     try
     {
         planner_plugin_loader.reset(new pluginlib::ClassLoader<planning_interface::PlannerManager>(
-                "moveit_core", "planning_interface::PlannerManager")); // !!!!!!!!!!!!!!! Controllare field package (forse ci va stomp_ros)
+                "moveit_core", "planning_interface::PlannerManager"));
     }
     catch (pluginlib::PluginlibException& ex)
     {
@@ -82,10 +82,7 @@ int main(int argc, char** argv) {
     visual_tools.enableBatchPublishing();
     visual_tools.deleteAllMarkers();  // clear all old markers
     visual_tools.trigger();
-
     visual_tools.loadRemoteControl();
-
-    // Batch publishing is used to reduce the number of messages being sent to RViz for large visualizations
     visual_tools.trigger();
 
     // ################
@@ -96,31 +93,35 @@ int main(int argc, char** argv) {
     planning_interface::MotionPlanRequest req;
     req.group_name = PLANNING_GROUP;
     planning_interface::MotionPlanResponse res;
+    robot_state::RobotState start_state(*move_group.getCurrentState());
+
 
     // Waypoints definition
     std::vector<geometry_msgs::Pose> waypoints;
     geometry_msgs::Pose tpose_1;
-    tpose_1.position.x = 0.05;
-    tpose_1.position.y = 0.05;
-    tpose_1.position.z = -0.15;
+    tpose_1.position.x = 0.03;
+    tpose_1.position.y = 0.03;
+    tpose_1.position.z = -0.05;
     tpose_1.orientation.w = 0.8;
+    start_state.setFromIK(joint_model_group, tpose_1);
+    move_group.setStartState(start_state);
     waypoints.push_back(tpose_1);
 
     geometry_msgs::Pose tpose_2;
-    tpose_2.position.x = 0.1;
-    tpose_2.position.y = 0.1;
+    tpose_2.position.x = 0.06;
+    tpose_2.position.y = 0.06;
     tpose_2.position.z = -0.1;
     tpose_2.orientation.w = 1.0;
     waypoints.push_back(tpose_2);
 
     geometry_msgs::Pose tpose_3;
-    tpose_3.position.x = 0.0;
-    tpose_3.position.y = 0.0;
-    tpose_3.position.z = 0.0;
+    tpose_3.position.x = 0.12;
+    tpose_3.position.y = 0.12;
+    tpose_3.position.z = -0.08;
     tpose_3.orientation.w = 1;
 //    waypoints.push_back(tpose_3);
 
-    move_group.setMaxVelocityScalingFactor(0.1);
+    move_group.setMaxVelocityScalingFactor(0.08);
 
     moveit_msgs::RobotTrajectory trajectory;
     const double jump_threshold = 0.0;
@@ -129,7 +130,7 @@ int main(int argc, char** argv) {
 
     geometry_msgs::PoseStamped pose_end;
     pose_end.header.frame_id = "world";
-    pose_end.pose = tpose_2;
+    pose_end.pose = tpose_3;
     std::vector<double> tolerance_pose(3, 0.01);
     std::vector<double> tolerance_angle(3, 0.01);
 
@@ -137,22 +138,27 @@ int main(int argc, char** argv) {
     wp1.header.frame_id = "world";
     wp1.pose = tpose_1;
 
-    robot_state::RobotState start_state(*move_group.getCurrentState());
-    start_state.setFromIK(joint_model_group, tpose_3);
-    move_group.setStartState(start_state);
+    geometry_msgs::PoseStamped wp2;
+    wp1.header.frame_id = "world";
+    wp1.pose = tpose_2;
 
     moveit_msgs::Constraints pose_goal_end =
             kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
 
     moveit_msgs::Constraints path_cons =
-            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", wp1, tolerance_pose, tolerance_angle);
+            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", wp2, tolerance_pose, tolerance_angle);
 
 //    req.goal_constraints.push_back(wp_goal);
     req.goal_constraints.push_back(pose_goal_end);
+    req.allowed_planning_time = 10.;
     req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
+    moveit::core::robotStateToRobotStateMsg(start_state, req.start_state);
+//    req.start_state = start_state;
 //    req.path_constraints = path_cons;
     planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
+
     context->setMotionPlanRequest(req);
+
     context->solve(res);
 
     ros::Publisher display_publisher =
