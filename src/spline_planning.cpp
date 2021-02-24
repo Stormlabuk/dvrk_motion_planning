@@ -1,6 +1,8 @@
 #include <pluginlib/class_loader.h>
 #include <ros/ros.h>
 #include <stomp_moveit/stomp_planner.h>
+#include <stomp_moveit/stomp_planner_manager.h>
+#include <string.h>
 
 // MoveIt!
 #include <moveit/robot_model_loader/robot_model_loader.h>
@@ -19,7 +21,7 @@
 
 int main(int argc, char** argv) {
 
-    const std::string node_name = "motion_planning_tutorial";
+    const std::string node_name = "spline_planning";
     ros::init(argc, argv, node_name);
     ros::AsyncSpinner spinner(1);
     spinner.start();
@@ -56,7 +58,8 @@ int main(int argc, char** argv) {
     try
     {
         planner_instance.reset(planner_plugin_loader->createUnmanagedInstance(planner_plugin_name));
-        if (!planner_instance->initialize(robot_model, node_handle.getNamespace()))
+        std::string pippo = node_handle.getNamespace();
+        if (!planner_instance->initialize(robot_model, "move_group"))
             ROS_FATAL_STREAM("Could not initialize planner instance");
         ROS_INFO_STREAM("Using planning interface '" << planner_instance->getDescription() << "'");
     }
