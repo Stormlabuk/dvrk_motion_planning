@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
     tpose_1.position.y = 0.03;
     tpose_1.position.z = -0.05;
     tpose_1.orientation.w = 0.8;
-    start_state.setFromIK(joint_model_group, tpose_1);
+//    start_state.setFromIK(joint_model_group, tpose_1);
     move_group.setStartState(start_state);
     waypoints.push_back(tpose_1);
 
@@ -115,11 +115,11 @@ int main(int argc, char** argv) {
     waypoints.push_back(tpose_2);
 
     geometry_msgs::Pose tpose_3;
-    tpose_3.position.x = 0.12;
-    tpose_3.position.y = 0.12;
+    tpose_3.position.x = 0.15;
+    tpose_3.position.y = 0.15;
     tpose_3.position.z = -0.08;
     tpose_3.orientation.w = 1;
-//    waypoints.push_back(tpose_3);
+    waypoints.push_back(tpose_3);
 
     move_group.setMaxVelocityScalingFactor(0.08);
 
@@ -128,9 +128,6 @@ int main(int argc, char** argv) {
     const double eef_step = 0.01;
     double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
-    geometry_msgs::PoseStamped pose_end;
-    pose_end.header.frame_id = "world";
-    pose_end.pose = tpose_3;
     std::vector<double> tolerance_pose(3, 0.01);
     std::vector<double> tolerance_angle(3, 0.01);
 
@@ -142,19 +139,30 @@ int main(int argc, char** argv) {
     wp1.header.frame_id = "world";
     wp1.pose = tpose_2;
 
+    geometry_msgs::PoseStamped wp3;
+    wp1.header.frame_id = "world";
+    wp1.pose = tpose_3;
+
+    geometry_msgs::PoseStamped pose_end;
+    pose_end.header.frame_id = "world";
+    pose_end.pose = tpose_3;
+
     moveit_msgs::Constraints pose_goal_end =
             kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
 
-    moveit_msgs::Constraints path_cons =
+    moveit_msgs::Constraints wp1_cons =
+            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", wp2, tolerance_pose, tolerance_angle);
+
+    moveit_msgs::Constraints wp2_cons =
             kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", wp2, tolerance_pose, tolerance_angle);
 
 //    req.goal_constraints.push_back(wp_goal);
     req.goal_constraints.push_back(pose_goal_end);
     req.allowed_planning_time = 10.;
     req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
+//    req.trajectory_constraints.constraints.push_back(wp_cons);
     moveit::core::robotStateToRobotStateMsg(start_state, req.start_state);
 //    req.start_state = start_state;
-//    req.path_constraints = path_cons;
     planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
 
     context->setMotionPlanRequest(req);
