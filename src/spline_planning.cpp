@@ -99,24 +99,24 @@ int main(int argc, char** argv) {
     // Waypoints definition
     std::vector<geometry_msgs::Pose> waypoints;
     geometry_msgs::Pose tpose_1;
-    tpose_1.position.x = 0.03;
-    tpose_1.position.y = 0.03;
-    tpose_1.position.z = -0.05;
-    tpose_1.orientation.w = 0.8;
+    tpose_1.position.x = 0.06;
+    tpose_1.position.y = 0.01;
+    tpose_1.position.z = -0.1;
+    tpose_1.orientation.w = 1.0;
 //    start_state.setFromIK(joint_model_group, tpose_1);
     move_group.setStartState(start_state);
     waypoints.push_back(tpose_1);
 
     geometry_msgs::Pose tpose_2;
-    tpose_2.position.x = 0.06;
-    tpose_2.position.y = 0.06;
-    tpose_2.position.z = -0.1;
+    tpose_2.position.x = 0.08;
+    tpose_2.position.y = 0.02;
+    tpose_2.position.z = -0.13;
     tpose_2.orientation.w = 1.0;
     waypoints.push_back(tpose_2);
 
     geometry_msgs::Pose tpose_3;
     tpose_3.position.x = 0.15;
-    tpose_3.position.y = 0.15;
+    tpose_3.position.y = 0.04;
     tpose_3.position.z = -0.08;
     tpose_3.orientation.w = 1;
     waypoints.push_back(tpose_3);
@@ -126,10 +126,10 @@ int main(int argc, char** argv) {
     moveit_msgs::RobotTrajectory trajectory;
     const double jump_threshold = 0.0;
     const double eef_step = 0.01;
-    double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+//    double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
-    std::vector<double> tolerance_pose(3, 0.01);
-    std::vector<double> tolerance_angle(3, 0.01);
+    std::vector<double> tolerance_pose(3, 0.001);
+    std::vector<double> tolerance_angle(3, 0.001);
 
     geometry_msgs::PoseStamped wp1;
     wp1.header.frame_id = "world";
@@ -159,8 +159,9 @@ int main(int argc, char** argv) {
 //    req.goal_constraints.push_back(wp_goal);
     req.goal_constraints.push_back(pose_goal_end);
     req.allowed_planning_time = 10.;
-    req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
-//    req.trajectory_constraints.constraints.push_back(wp_cons);
+//    req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
+    req.trajectory_constraints.constraints.push_back(wp1_cons);
+    req.trajectory_constraints.constraints.push_back(wp2_cons);
     moveit::core::robotStateToRobotStateMsg(start_state, req.start_state);
 //    req.start_state = start_state;
     planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
