@@ -23,6 +23,7 @@ catkin_package(
 )
 
 include_directories(
+  include/
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -44,6 +45,6 @@ target_link_libraries(go2point ${catkin_LIBRARIES})
 add_executable(waypoints_trajectory src/waypoints_trajectory.cpp)
 target_link_libraries(waypoints_trajectory ${catkin_LIBRARIES})
 
-add_executable(spline_planning src/spline_planning.cpp)
+add_executable(spline_planning src/spline_planning.cpp src/dvrk_moveit_class.cpp)
 target_link_libraries(spline_planning ${catkin_LIBRARIES})
 

@@ -2,6 +2,7 @@
 #include <ros/ros.h>
 #include <stomp_moveit/stomp_planner.h>
 #include <stomp_moveit/stomp_planner_manager.h>
+#include <dvrk_moveit_class.h>
 #include <string.h>
 
 // MoveIt!
@@ -95,35 +96,37 @@ int main(int argc, char** argv) {
     planning_interface::MotionPlanResponse res;
     robot_state::RobotState start_state(*move_group.getCurrentState());
 
+    MoveItDVRK mid;
     std::vector<geometry_msgs::Pose> waypoints;
+    waypoints = mid.getWaypointsVector('L');
+//    geometry_msgs::PoseStamped tpose_0 = move_group.getCurrentPose();
 
-    geometry_msgs::PoseStamped tpose_0 = move_group.getCurrentPose();
+//    geometry_msgs::Pose tpose_1;
+//    tpose_1.position.x = 0.03;
+//    tpose_1.position.y = 0.07;
+//    tpose_1.position.z = -0.05;
+//    tpose_1.orientation.w = 0.4;
+//
+//
+//    geometry_msgs::Pose tpose_2;
+//    tpose_2.position.x = 0.06;
+//    tpose_2.position.y = 0.08;
+//    tpose_2.position.z = -0.1;
+//    tpose_2.orientation.w = 1.0;
+//
+//    geometry_msgs::Pose tpose_3;
+//    tpose_3.position.x = 0.15;
+//    tpose_3.position.y = 0.1;
+//    tpose_3.position.z = -0.1;
+//    tpose_3.orientation.w = 1;
+//
+////    waypoints.push_back(tpose_0.pose);
+//    waypoints.push_back(tpose_1);
+//    waypoints.push_back(tpose_2);
+//    waypoints.push_back(tpose_3);
 
-    geometry_msgs::Pose tpose_1;
-    tpose_1.position.x = 0.03;
-    tpose_1.position.y = 0.07;
-    tpose_1.position.z = -0.05;
-    tpose_1.orientation.w = 0.4;
 
-
-    geometry_msgs::Pose tpose_2;
-    tpose_2.position.x = 0.06;
-    tpose_2.position.y = 0.08;
-    tpose_2.position.z = -0.1;
-    tpose_2.orientation.w = 1.0;
-
-    geometry_msgs::Pose tpose_3;
-    tpose_3.position.x = 0.15;
-    tpose_3.position.y = 0.1;
-    tpose_3.position.z = -0.1;
-    tpose_3.orientation.w = 1;
-
-//    waypoints.push_back(tpose_0.pose);
-    waypoints.push_back(tpose_1);
-    waypoints.push_back(tpose_2);
-    waypoints.push_back(tpose_3);
-
-    start_state.setFromIK(joint_model_group, tpose_1);
+    start_state.setFromIK(joint_model_group, waypoints.at(0));
     move_group.setStartState(start_state);
 
     move_group.setMaxVelocityScalingFactor(0.08);
@@ -138,19 +141,19 @@ int main(int argc, char** argv) {
 
     geometry_msgs::PoseStamped wp1;
     wp1.header.frame_id = "world";
-    wp1.pose = tpose_1;
+    wp1.pose = waypoints.at(0);
 
     geometry_msgs::PoseStamped wp2;
-    wp1.header.frame_id = "world";
-    wp1.pose = tpose_2;
+    wp2.header.frame_id = "world";
+    wp2.pose = waypoints.at(1);
 
     geometry_msgs::PoseStamped wp3;
-    wp1.header.frame_id = "world";
-    wp1.pose = tpose_3;
+    wp3.header.frame_id = "world";
+    wp3.pose = waypoints.at(2);
 
     geometry_msgs::PoseStamped pose_end;
     pose_end.header.frame_id = "world";
-    pose_end.pose = tpose_3;
+    pose_end.pose = waypoints.at(2);
 
     moveit_msgs::Constraints pose_goal_end =
             kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
@@ -190,9 +193,9 @@ int main(int argc, char** argv) {
     planning_scene->setCurrentState(*robot_state.get());
 
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
-    visual_tools.publishAxisLabeled(tpose_1, "goal_1");
-    visual_tools.publishAxisLabeled(tpose_2, "goal_2");
-    visual_tools.publishAxisLabeled(tpose_3, "goal_3");
+    visual_tools.publishAxisLabeled(waypoints.at(0), "goal_1");
+    visual_tools.publishAxisLabeled(waypoints.at(1), "goal_2");
+    visual_tools.publishAxisLabeled(waypoints.at(2), "goal_3");
 
     visual_tools.trigger();
 
