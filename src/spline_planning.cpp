@@ -98,38 +98,12 @@ int main(int argc, char** argv) {
 
     MoveItDVRK mid;
     std::vector<geometry_msgs::Pose> waypoints;
-    waypoints = mid.getWaypointsVector('L');
-//    geometry_msgs::PoseStamped tpose_0 = move_group.getCurrentPose();
-
-//    geometry_msgs::Pose tpose_1;
-//    tpose_1.position.x = 0.03;
-//    tpose_1.position.y = 0.07;
-//    tpose_1.position.z = -0.05;
-//    tpose_1.orientation.w = 0.4;
-//
-//
-//    geometry_msgs::Pose tpose_2;
-//    tpose_2.position.x = 0.06;
-//    tpose_2.position.y = 0.08;
-//    tpose_2.position.z = -0.1;
-//    tpose_2.orientation.w = 1.0;
-//
-//    geometry_msgs::Pose tpose_3;
-//    tpose_3.position.x = 0.15;
-//    tpose_3.position.y = 0.1;
-//    tpose_3.position.z = -0.1;
-//    tpose_3.orientation.w = 1;
-//
-////    waypoints.push_back(tpose_0.pose);
-//    waypoints.push_back(tpose_1);
-//    waypoints.push_back(tpose_2);
-//    waypoints.push_back(tpose_3);
-
+    waypoints = mid.getWaypointsVector('B');
 
     start_state.setFromIK(joint_model_group, waypoints.at(0));
     move_group.setStartState(start_state);
 
-    move_group.setMaxVelocityScalingFactor(0.08);
+    move_group.setMaxVelocityScalingFactor(0.04);
 
     moveit_msgs::RobotTrajectory trajectory;
     const double jump_threshold = 0.0;
@@ -163,14 +137,11 @@ int main(int argc, char** argv) {
 
     moveit_msgs::Constraints wp2_cons =
             kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", wp2, tolerance_pose, tolerance_angle);
-
-//    req.goal_constraints.push_back(wp_goal);
+    
     req.goal_constraints.push_back(pose_goal_end);
     req.allowed_planning_time = 10.;
     req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
-//    req.trajectory_constraints.constraints.push_back(wp_cons);
     moveit::core::robotStateToRobotStateMsg(start_state, req.start_state);
-//    req.start_state = start_state;
     planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
 
     context->setMotionPlanRequest(req);

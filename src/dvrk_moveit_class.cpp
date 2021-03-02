@@ -15,7 +15,7 @@ std::vector<geometry_msgs::Pose> MoveItDVRK::getWaypointsVector(char traj_ID) {
     geometry_msgs::Pose tpose_3;
 
     // waypoints for left trajectory (L)
-    if(traj_ID = 'L'){
+    if(traj_ID == 'L'){
         tpose_1.position.x = 0.11;
         tpose_1.position.y = 0.07;
         tpose_1.position.z = -0.07;
@@ -32,7 +32,7 @@ std::vector<geometry_msgs::Pose> MoveItDVRK::getWaypointsVector(char traj_ID) {
         tpose_3.orientation.w = 1;
     }
 
-    if (traj_ID = 'R'){
+    if (traj_ID == 'R'){
 
         tpose_1.position.x = -0.08;
         tpose_1.position.y = 0.02;
@@ -50,11 +50,11 @@ std::vector<geometry_msgs::Pose> MoveItDVRK::getWaypointsVector(char traj_ID) {
         tpose_3.orientation.w = 1;
     }
 
-    if (traj_ID = 'B'){
+    if (traj_ID == 'B'){
 
-        tpose_1.position.x = 0.01;
-        tpose_1.position.y = 0.02;
-        tpose_1.position.z = -0.02;
+        tpose_1.position.x = 0.02;
+        tpose_1.position.y = 0.03;
+        tpose_1.position.z = -0.03;
         tpose_1.orientation.w = 0.4;
 
         tpose_2.position.x = -0.02;
