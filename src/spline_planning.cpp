@@ -30,24 +30,23 @@ int main(int argc, char** argv) {
 
     MoveItDVRKPlanning mid;
 
-    const std::string PLANNING_GROUP = "psm_arm";
-    moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
+    // ### LOAD MOVE GROUP, ROBOT MODEL AND ROBOT STATE ###
+    moveit::planning_interface::MoveGroupInterface move_group(mid.move_group_name);
     robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
     robot_model::RobotModelPtr robot_model = robot_model_loader.getModel();
     robot_state::RobotStatePtr robot_state(new robot_state::RobotState(robot_model));
-    const robot_state::JointModelGroup* joint_model_group = robot_state->getJointModelGroup(PLANNING_GROUP);
+    const robot_state::JointModelGroup* joint_model_group = robot_state->getJointModelGroup(mid.move_group_name);
 
     planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
 
-    // LOAD PLANNER PLUGIN
+    // ### LOAD PLANNER PLUGIN ###
     planning_interface::PlannerManagerPtr planner_instance = MoveItDVRKPlanning::loadPlannerPlugin(node_handle,robot_model);
-
 
     // ################
     // ### VISUALIS ###
     // ################
-    namespace rvt = rviz_visual_tools;
+//    namespace rvt = rviz_visual_tools;
     moveit_visual_tools::MoveItVisualTools visual_tools("world");
     visual_tools.loadRobotStatePub("/display_robot_state");
     visual_tools.enableBatchPublishing();
@@ -61,13 +60,12 @@ int main(int argc, char** argv) {
     // ################
     // ### PLANNING ###
     // ################
-
     planning_interface::MotionPlanRequest req;
-    req.group_name = PLANNING_GROUP;
     planning_interface::MotionPlanResponse res;
+    req.group_name = mid.move_group_name;
     robot_state::RobotState start_state(*move_group.getCurrentState());
 
-    mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('R');
+    mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
 
     start_state.setFromIK(joint_model_group, mid.waypoints.at(0));
     move_group.setStartState(start_state);
