@@ -8,6 +8,7 @@
 #include <pluginlib/class_loader.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <boost/scoped_ptr.hpp>
+#include <moveit_visual_tools/moveit_visual_tools.h>
 
 std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char traj_ID) {
     //waypooints vector
@@ -122,4 +123,18 @@ MoveItDVRKPlanning::MoveItDVRKPlanning(){
     tolerance_pose = std::vector<double> (3,0.01);
     tolerance_angle = std::vector<double> (3,0.01);
     max_vel_scaling_factor = 0.04;
+    move_group_name = "psm_arm";
+}
+
+void MoveItDVRKPlanning::setupRVizVisualisation(moveit_visual_tools::MoveItVisualTools visual_tools,  planning_scene::PlanningScenePtr planning_scene) {
+    visual_tools.loadRobotStatePub("/display_robot_state");
+    visual_tools.enableBatchPublishing();
+    visual_tools.deleteAllMarkers();  // clear all old markers
+    visual_tools.trigger();
+    visual_tools.loadRemoteControl();
+    visual_tools.trigger();
+    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
+    visual_tools.trigger();
+
+
 }

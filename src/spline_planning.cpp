@@ -36,6 +36,7 @@ int main(int argc, char** argv) {
     robot_model::RobotModelPtr robot_model = robot_model_loader.getModel();
     robot_state::RobotStatePtr robot_state(new robot_state::RobotState(robot_model));
     const robot_state::JointModelGroup* joint_model_group = robot_state->getJointModelGroup(mid.move_group_name);
+    robot_state::RobotState start_state(*move_group.getCurrentState()); // initial state of the robot
 
     planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
@@ -46,16 +47,8 @@ int main(int argc, char** argv) {
     // ################
     // ### VISUALIS ###
     // ################
-//    namespace rvt = rviz_visual_tools;
     moveit_visual_tools::MoveItVisualTools visual_tools("world");
-    visual_tools.loadRobotStatePub("/display_robot_state");
-    visual_tools.enableBatchPublishing();
-    visual_tools.deleteAllMarkers();  // clear all old markers
-    visual_tools.trigger();
-    visual_tools.loadRemoteControl();
-    visual_tools.trigger();
-    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
-    visual_tools.trigger();
+    MoveItDVRKPlanning::setupRVizVisualisation(visual_tools, planning_scene);
 
     // ################
     // ### PLANNING ###
@@ -63,7 +56,6 @@ int main(int argc, char** argv) {
     planning_interface::MotionPlanRequest req;
     planning_interface::MotionPlanResponse res;
     req.group_name = mid.move_group_name;
-    robot_state::RobotState start_state(*move_group.getCurrentState());
 
     mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
 
@@ -74,6 +66,7 @@ int main(int argc, char** argv) {
     moveit_msgs::RobotTrajectory trajectory;
     double fraction = move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory);
 
+    
     geometry_msgs::PoseStamped pose_end;
     pose_end.header.frame_id = "world";
     pose_end.pose = mid.waypoints.at(2);
