@@ -28,9 +28,10 @@ int main(int argc, char** argv) {
     spinner.start();
     ros::NodeHandle node_handle("~");
 
+    MoveItDVRKPlanning mid;
+
     const std::string PLANNING_GROUP = "psm_arm";
     moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
-
     robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
     robot_model::RobotModelPtr robot_model = robot_model_loader.getModel();
     robot_state::RobotStatePtr robot_state(new robot_state::RobotState(robot_model));
@@ -38,9 +39,8 @@ int main(int argc, char** argv) {
 
     planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
-//    move_group.setPlanningTime(5);
 
-
+    // LOAD PLANNER PLUGIN
     planning_interface::PlannerManagerPtr planner_instance = MoveItDVRKPlanning::loadPlannerPlugin(node_handle,robot_model);
 
 
@@ -55,58 +55,33 @@ int main(int argc, char** argv) {
     visual_tools.trigger();
     visual_tools.loadRemoteControl();
     visual_tools.trigger();
+    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
+    visual_tools.trigger();
 
     // ################
     // ### PLANNING ###
     // ################
-    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
-    visual_tools.trigger();
+
     planning_interface::MotionPlanRequest req;
     req.group_name = PLANNING_GROUP;
     planning_interface::MotionPlanResponse res;
     robot_state::RobotState start_state(*move_group.getCurrentState());
 
+    mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('R');
 
-    std::vector<geometry_msgs::Pose> waypoints;
-    waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
-
-    start_state.setFromIK(joint_model_group, waypoints.at(0));
+    start_state.setFromIK(joint_model_group, mid.waypoints.at(0));
     move_group.setStartState(start_state);
-
-    move_group.setMaxVelocityScalingFactor(0.04);
+    move_group.setMaxVelocityScalingFactor(mid.max_vel_scaling_factor);
 
     moveit_msgs::RobotTrajectory trajectory;
-    const double jump_threshold = 0.0;
-    const double eef_step = 0.01;
-    double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
-
-    std::vector<double> tolerance_pose(3, 0.01);
-    std::vector<double> tolerance_angle(3, 0.01);
-
-    geometry_msgs::PoseStamped wp1;
-    wp1.header.frame_id = "world";
-    wp1.pose = waypoints.at(0);
-
-    geometry_msgs::PoseStamped wp2;
-    wp2.header.frame_id = "world";
-    wp2.pose = waypoints.at(1);
-
-    geometry_msgs::PoseStamped wp3;
-    wp3.header.frame_id = "world";
-    wp3.pose = waypoints.at(2);
+    double fraction = move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory);
 
     geometry_msgs::PoseStamped pose_end;
     pose_end.header.frame_id = "world";
-    pose_end.pose = waypoints.at(2);
+    pose_end.pose = mid.waypoints.at(2);
 
     moveit_msgs::Constraints pose_goal_end =
-            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
-
-    moveit_msgs::Constraints wp1_cons =
-            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", wp2, tolerance_pose, tolerance_angle);
-
-    moveit_msgs::Constraints wp2_cons =
-            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", wp2, tolerance_pose, tolerance_angle);
+            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, mid.tolerance_pose, mid.tolerance_angle);
 
     req.goal_constraints.push_back(pose_goal_end);
     req.allowed_planning_time = 10.;
@@ -134,9 +109,9 @@ int main(int argc, char** argv) {
     planning_scene->setCurrentState(*robot_state.get());
 
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
-    visual_tools.publishAxisLabeled(waypoints.at(0), "goal_1");
-    visual_tools.publishAxisLabeled(waypoints.at(1), "goal_2");
-    visual_tools.publishAxisLabeled(waypoints.at(2), "goal_3");
+    visual_tools.publishAxisLabeled(mid.waypoints.at(0), "goal_1");
+    visual_tools.publishAxisLabeled(mid.waypoints.at(1), "goal_2");
+    visual_tools.publishAxisLabeled(mid.waypoints.at(2), "goal_3");
 
     visual_tools.trigger();
 

@@ -119,9 +119,7 @@ planning_interface::PlannerManagerPtr MoveItDVRKPlanning::loadPlannerPlugin(ros:
 }
 
 MoveItDVRKPlanning::MoveItDVRKPlanning(){
-    std::vector<double> tolerance_pose(3, 0.01);
-    std::vector<double> tolerance_angle(3, 0.01);
-    float max_vel_scaling_factor = .04;
-    const double jump_threshold = 0.0;
-    const double eef_step = 0.01;
+    tolerance_pose = std::vector<double> (3,0.01);
+    tolerance_angle = std::vector<double> (3,0.01);
+    max_vel_scaling_factor = 0.04;
 }
