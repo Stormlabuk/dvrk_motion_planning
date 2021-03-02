@@ -5,7 +5,7 @@
 #include <geometry_msgs/Pose.h>
 #include "dvrk_moveit_class.h"
 
-std::vector<geometry_msgs::Pose> MoveItDVRK::getWaypointsVector(char traj_ID) {
+std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char traj_ID) {
     //waypooints vector
     std::vector<geometry_msgs::Pose> waypoints;
 

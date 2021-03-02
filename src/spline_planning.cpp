@@ -96,9 +96,9 @@ int main(int argc, char** argv) {
     planning_interface::MotionPlanResponse res;
     robot_state::RobotState start_state(*move_group.getCurrentState());
 
-    MoveItDVRK mid;
+
     std::vector<geometry_msgs::Pose> waypoints;
-    waypoints = mid.getWaypointsVector('B');
+    waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
 
     start_state.setFromIK(joint_model_group, waypoints.at(0));
     move_group.setStartState(start_state);
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
 
     moveit_msgs::Constraints wp2_cons =
             kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", wp2, tolerance_pose, tolerance_angle);
-    
+
     req.goal_constraints.push_back(pose_goal_end);
     req.allowed_planning_time = 10.;
     req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);

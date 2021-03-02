@@ -9,10 +9,10 @@
 #include <stdio.h>
 #include <geometry_msgs/Pose.h>
 
-class MoveItDVRK {
+class MoveItDVRKPlanning {
 
 public:
-    std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
+    static std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
 };
 
 
