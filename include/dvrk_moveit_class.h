@@ -8,11 +8,17 @@
 
 #include <stdio.h>
 #include <geometry_msgs/Pose.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
+#include <ros/ros.h>
+#include <moveit/planning_interface/planning_interface.h>
 
 class MoveItDVRKPlanning {
 
+
 public:
+    MoveItDVRKPlanning();
     static std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
+    static planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle, robot_model::RobotModelPtr robot_model);
 };
 
 

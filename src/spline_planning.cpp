@@ -38,41 +38,11 @@ int main(int argc, char** argv) {
 
     planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
-    move_group.setPlanningTime(5);
-    // Load plugin planner
-    boost::scoped_ptr<pluginlib::ClassLoader<planning_interface::PlannerManager>> planner_plugin_loader;
-    planning_interface::PlannerManagerPtr planner_instance;
-    std::string planner_plugin_name;
+//    move_group.setPlanningTime(5);
 
-    // Handle plugin boot
-    if (!node_handle.getParam("/move_group/planning_plugin", planner_plugin_name))
-        ROS_FATAL_STREAM("Could not find planner plugin name");
-    try
-    {
-        planner_plugin_loader.reset(new pluginlib::ClassLoader<planning_interface::PlannerManager>(
-                "moveit_core", "planning_interface::PlannerManager"));
-    }
-    catch (pluginlib::PluginlibException& ex)
-    {
-        ROS_FATAL_STREAM("Exception while creating planning plugin loader " << ex.what());
-    }
-    try
-    {
-        planner_instance.reset(planner_plugin_loader->createUnmanagedInstance(planner_plugin_name));
-        std::string pippo = node_handle.getNamespace();
-        if (!planner_instance->initialize(robot_model, "move_group"))
-            ROS_FATAL_STREAM("Could not initialize planner instance");
-        ROS_INFO_STREAM("Using planning interface '" << planner_instance->getDescription() << "'");
-    }
-    catch (pluginlib::PluginlibException& ex)
-    {
-        const std::vector<std::string>& classes = planner_plugin_loader->getDeclaredClasses();
-        std::stringstream ss;
-        for (std::size_t i = 0; i < classes.size(); ++i)
-            ss << classes[i] << " ";
-        ROS_ERROR_STREAM("Exception while loading planner '" << planner_plugin_name << "': " << ex.what() << std::endl
-                                                             << "Available plugins: " << ss.str());
-    }
+
+    planning_interface::PlannerManagerPtr planner_instance = MoveItDVRKPlanning::loadPlannerPlugin(node_handle,robot_model);
+
 
     // ################
     // ### VISUALIS ###
