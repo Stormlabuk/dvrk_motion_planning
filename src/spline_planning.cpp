@@ -30,49 +30,36 @@ int main(int argc, char** argv) {
 
     MoveItDVRKPlanning mid;
 
-    // ### LOAD MOVE GROUP, ROBOT MODEL AND ROBOT STATE ###
-    moveit::planning_interface::MoveGroupInterface move_group(mid.move_group_name);
-    robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
-    robot_model::RobotModelPtr robot_model = robot_model_loader.getModel();
-    robot_state::RobotStatePtr robot_state(new robot_state::RobotState(robot_model));
-    const robot_state::JointModelGroup* joint_model_group = robot_state->getJointModelGroup(mid.move_group_name);
-    robot_state::RobotState start_state(*move_group.getCurrentState()); // initial state of the robot
-
-    planning_scene::PlanningScenePtr planning_scene(new planning_scene::PlanningScene(robot_model));
-    planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
-
     // ### LOAD PLANNER PLUGIN ###
-    planning_interface::PlannerManagerPtr planner_instance = MoveItDVRKPlanning::loadPlannerPlugin(node_handle,robot_model);
+    planning_interface::PlannerManagerPtr planner_instance = MoveItDVRKPlanning::loadPlannerPlugin(node_handle,mid.robot_model);
 
     // ################
     // ### VISUALIS ###
     // ################
     moveit_visual_tools::MoveItVisualTools visual_tools("world");
-    MoveItDVRKPlanning::setupRVizVisualisation(visual_tools, planning_scene);
+    MoveItDVRKPlanning::setupRVizVisualisation(visual_tools, mid.planning_scene);
 
     // ################
     // ### PLANNING ###
     // ################
-//    planning_interface::MotionPlanRequest req;
-//    planning_interface::MotionPlanResponse res;
 
     // ### DEFINE WAYPOINTS ###
     mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
 
     // EVALUATE CARTESIAN PATH TO SMOOTH WITH STOMP
-    start_state.setFromIK(joint_model_group, mid.waypoints.at(0));
-    move_group.setStartState(start_state);
-    move_group.setMaxVelocityScalingFactor(mid.max_vel_scaling_factor);
+    mid.start_state.setFromIK(mid.joint_model_group, mid.waypoints.at(0));
+    mid.move_group.setStartState(mid.start_state);
+    mid.move_group.setMaxVelocityScalingFactor(mid.max_vel_scaling_factor);
 
     moveit_msgs::RobotTrajectory trajectory;
-    double fraction = move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory);
+    double fraction = mid.move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory);
 
-    // ### DEFINE GOAL POSE AND EVALUATE ITS CONSTRAINT ###
+    // ### DEFINE GOAL POSE AND COMPILE MOTION PLAN REQUEST ###
     moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(2));
+    mid.compileMotionPlanRequest(pose_goal_end, trajectory, mid.start_state);
 
-    mid.compileMotionPlanRequest(pose_goal_end, trajectory, start_state);
-
-    planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, mid.req, mid.res.error_code_);
+    // SOLVE REQUEST
+    planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(mid.planning_scene, mid.req, mid.res.error_code_);
     context->setMotionPlanRequest(mid.req);
     context->solve(mid.res);
 
@@ -86,14 +73,14 @@ int main(int argc, char** argv) {
     mid.res.getMessage(response);
     display_trajectory.trajectory_start = response.trajectory_start;
     display_trajectory.trajectory.push_back(response.trajectory);
-    visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), joint_model_group);
+    visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), mid.joint_model_group);
     visual_tools.trigger();
     display_publisher.publish(display_trajectory);
 
-    robot_state->setJointGroupPositions(joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
-    planning_scene->setCurrentState(*robot_state.get());
+    mid.robot_state->setJointGroupPositions(mid.joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
+    mid.planning_scene->setCurrentState(*mid.robot_state.get());
 
-    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
+    visual_tools.publishRobotState(mid.planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
     visual_tools.publishAxisLabeled(mid.waypoints.at(0), "goal_1");
     visual_tools.publishAxisLabeled(mid.waypoints.at(1), "goal_2");
     visual_tools.publishAxisLabeled(mid.waypoints.at(2), "goal_3");
