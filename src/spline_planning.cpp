@@ -1,24 +1,20 @@
-#include <pluginlib/class_loader.h>
+//#include <pluginlib/class_loader.h>
 #include <ros/ros.h>
-#include <stomp_moveit/stomp_planner.h>
-#include <stomp_moveit/stomp_planner_manager.h>
+//#include <stomp_moveit/stomp_planner.h>
+//#include <stomp_moveit/stomp_planner_manager.h>
 #include <dvrk_moveit_class.h>
 #include <string.h>
 
 // MoveIt!
-#include <moveit/robot_model_loader/robot_model_loader.h>
-#include <moveit/planning_pipeline/planning_pipeline.h>
+//#include <moveit/robot_model_loader/robot_model_loader.h>
+//#include <moveit/planning_pipeline/planning_pipeline.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/kinematic_constraints/utils.h>
 #include <moveit_msgs/DisplayTrajectory.h>
-#include <moveit_msgs/PlanningScene.h>
-#include <moveit_visual_tools/moveit_visual_tools.h>
-#include <moveit/move_group_interface/move_group_interface.h>
-#include <moveit/planning_scene_interface/planning_scene_interface.h>
-
-//
-//
-//#include <boost/scoped_ptr.hpp>
+//#include <moveit_msgs/PlanningScene.h>
+//#include <moveit_visual_tools/moveit_visual_tools.h>
+//#include <moveit/move_group_interface/move_group_interface.h>
+//#include <moveit/planning_scene_interface/planning_scene_interface.h>
 
 int main(int argc, char** argv) {
 

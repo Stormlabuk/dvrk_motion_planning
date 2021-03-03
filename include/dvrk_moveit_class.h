@@ -28,15 +28,15 @@ class MoveItDVRKPlanning {
 
 
 public:
+    std::string move_group_name = "psm_arm";
+    std::vector<geometry_msgs::Pose> waypoints;
     std::vector<double> tolerance_pose;
     std::vector<double> tolerance_angle;
+    planning_interface::MotionPlanRequest req;
+    planning_interface::MotionPlanResponse res;
     float max_vel_scaling_factor;
     const double jump_threshold = 0.0;
     const double eef_step = 0.01;
-    std::string move_group_name = "psm_arm";
-    std::vector<geometry_msgs::Pose> waypoints;
-    planning_interface::MotionPlanRequest req;
-    planning_interface::MotionPlanResponse res;
 
     moveit::planning_interface::MoveGroupInterface move_group = moveit::planning_interface::MoveGroupInterface(move_group_name);
     robot_model_loader::RobotModelLoader robot_model_loader = robot_model_loader::RobotModelLoader("robot_description");
@@ -50,10 +50,11 @@ public:
 
     MoveItDVRKPlanning();
     static std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
+    std::vector<geometry_msgs::Pose> getRandomWaypointsVector(std::string eef_name = "psm_tool_tip_link");
     planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
     void setupPlanningScene();
-    void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory, robot_state::RobotState start_state);
+    void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory);
     void displayResultTrajectory(ros::NodeHandle node_handle);
 };
 
