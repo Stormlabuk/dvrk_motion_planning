@@ -163,29 +163,29 @@ void MoveItDVRKPlanning::compileMotionPlanRequest(moveit_msgs::Constraints goal_
 
 }
 
-//void MoveItDVRKPlanning::displayResultTrajectory(moveit_visual_tools::MoveItVisualTools visual_tools, ros::NodeHandle node_handle){
-//    ros::Publisher display_publisher =
-//            node_handle.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
-//    moveit_msgs::DisplayTrajectory display_trajectory;
-//
-//    moveit_msgs::MotionPlanResponse response;
-//    mid.res.getMessage(response);
-//    display_trajectory.trajectory_start = response.trajectory_start;
-//    display_trajectory.trajectory.push_back(response.trajectory);
-//    visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), joint_model_group);
-//    visual_tools.trigger();
-//    display_publisher.publish(display_trajectory);
-//
-//    robot_state->setJointGroupPositions(joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
-//    planning_scene->setCurrentState(*robot_state.get());
-//
-//    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
-//    visual_tools.publishAxisLabeled(waypoints.at(0), "goal_1");
-//    visual_tools.publishAxisLabeled(waypoints.at(1), "goal_2");
-//    visual_tools.publishAxisLabeled(waypoints.at(2), "goal_3");
-//
-//    visual_tools.trigger();
-//
-//
-//    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
-//}
+void MoveItDVRKPlanning::displayResultTrajectory(moveit_visual_tools::MoveItVisualTools visual_tools, ros::NodeHandle node_handle){
+    ros::Publisher display_publisher =
+            node_handle.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
+    moveit_msgs::DisplayTrajectory display_trajectory;
+
+    moveit_msgs::MotionPlanResponse response;
+    res.getMessage(response);
+    display_trajectory.trajectory_start = response.trajectory_start;
+    display_trajectory.trajectory.push_back(response.trajectory);
+    visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), joint_model_group);
+    visual_tools.trigger();
+    display_publisher.publish(display_trajectory);
+
+    robot_state->setJointGroupPositions(joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
+    planning_scene->setCurrentState(*robot_state.get());
+
+    visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
+    visual_tools.publishAxisLabeled(waypoints.at(0), "goal_1");
+    visual_tools.publishAxisLabeled(waypoints.at(1), "goal_2");
+    visual_tools.publishAxisLabeled(waypoints.at(2), "goal_3");
+
+    visual_tools.trigger();
+
+
+    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+}

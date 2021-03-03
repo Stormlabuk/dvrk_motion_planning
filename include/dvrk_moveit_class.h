@@ -53,7 +53,7 @@ public:
     static void setupRVizVisualisation(moveit_visual_tools::MoveItVisualTools visual_tools,  planning_scene::PlanningScenePtr planning_scene);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory, robot_state::RobotState start_state);
-//    void displayResultTrajectory();
+    void displayResultTrajectory(moveit_visual_tools::MoveItVisualTools visual_tools, ros::NodeHandle node_handle);
 };
 
 

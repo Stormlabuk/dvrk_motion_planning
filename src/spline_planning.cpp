@@ -65,30 +65,7 @@ int main(int argc, char** argv) {
 
 
     // ### SHOW RESULT TRAJECTORY ###
-    ros::Publisher display_publisher =
-            node_handle.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
-    moveit_msgs::DisplayTrajectory display_trajectory;
-
-    moveit_msgs::MotionPlanResponse response;
-    mid.res.getMessage(response);
-    display_trajectory.trajectory_start = response.trajectory_start;
-    display_trajectory.trajectory.push_back(response.trajectory);
-    visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), mid.joint_model_group);
-    visual_tools.trigger();
-    display_publisher.publish(display_trajectory);
-
-    mid.robot_state->setJointGroupPositions(mid.joint_model_group, response.trajectory.joint_trajectory.points.back().positions);
-    mid.planning_scene->setCurrentState(*mid.robot_state.get());
-
-    visual_tools.publishRobotState(mid.planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
-    visual_tools.publishAxisLabeled(mid.waypoints.at(0), "goal_1");
-    visual_tools.publishAxisLabeled(mid.waypoints.at(1), "goal_2");
-    visual_tools.publishAxisLabeled(mid.waypoints.at(2), "goal_3");
-
-    visual_tools.trigger();
-
-
-    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+    mid.displayResultTrajectory(visual_tools, node_handle);
 
 }
 
