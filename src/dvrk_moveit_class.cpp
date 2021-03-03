@@ -83,6 +83,22 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
     return waypoints;
 }
 
+std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getRandomWaypointsVector(std::string eef_name){
+
+    std::vector<geometry_msgs::Pose> waypoints;
+
+    // points -> waypoints
+    geometry_msgs::PoseStamped tpose_1 = move_group.getRandomPose(eef_name);
+    geometry_msgs::PoseStamped tpose_2 = move_group.getRandomPose(eef_name);
+    geometry_msgs::PoseStamped tpose_3 = move_group.getRandomPose(eef_name);
+
+    waypoints.push_back(tpose_1.pose);
+    waypoints.push_back(tpose_2.pose);
+    waypoints.push_back(tpose_3.pose);
+
+    return waypoints;
+}
+
 planning_interface::PlannerManagerPtr MoveItDVRKPlanning::loadPlannerPlugin(ros::NodeHandle node_handle) {
     boost::scoped_ptr<pluginlib::ClassLoader<planning_interface::PlannerManager>> planner_plugin_loader;
     planning_interface::PlannerManagerPtr planner_instance;
@@ -152,7 +168,8 @@ moveit_msgs::Constraints MoveItDVRKPlanning::computeGoalConstraint(geometry_msgs
 
 }
 
-void MoveItDVRKPlanning::compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory, robot_state::RobotState start_state){
+void MoveItDVRKPlanning::compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory){
+
     req.group_name = move_group_name;
     req.goal_constraints.push_back(goal_constraint);
     req.allowed_planning_time = 10.;

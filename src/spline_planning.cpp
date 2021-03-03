@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
 
     // ### DEFINE WAYPOINTS ###
     mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
+//    mid.waypoints = mid.getRandomWaypointsVector();
 
     // EVALUATE CARTESIAN PATH TO SMOOTH WITH STOMP
     mid.start_state.setFromIK(mid.joint_model_group, mid.waypoints.at(0));
@@ -45,7 +46,7 @@ int main(int argc, char** argv) {
 
     // ### DEFINE GOAL POSE AND COMPILE MOTION PLAN REQUEST ###
     moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(2));
-    mid.compileMotionPlanRequest(pose_goal_end, trajectory, mid.start_state);
+    mid.compileMotionPlanRequest(pose_goal_end, trajectory);
 
     // SOLVE REQUEST
     planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(mid.planning_scene, mid.req, mid.res.error_code_);
