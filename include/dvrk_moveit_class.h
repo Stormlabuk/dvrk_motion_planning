@@ -45,15 +45,16 @@ public:
     const robot_state::JointModelGroup* joint_model_group = robot_state->getJointModelGroup(move_group_name);
     robot_state::RobotState start_state = robot_state::RobotState(*move_group.getCurrentState()); // initial state of the robot
     planning_scene::PlanningScenePtr planning_scene = std::make_shared<planning_scene::PlanningScene>(robot_model);
+    moveit_visual_tools::MoveItVisualTools visual_tools = moveit_visual_tools::MoveItVisualTools("world");
 
 
     MoveItDVRKPlanning();
     static std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
     static planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle, robot_model::RobotModelPtr robot_model);
-    static void setupRVizVisualisation(moveit_visual_tools::MoveItVisualTools visual_tools,  planning_scene::PlanningScenePtr planning_scene);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
+    void setupPlanningScene();
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory, robot_state::RobotState start_state);
-    void displayResultTrajectory(moveit_visual_tools::MoveItVisualTools visual_tools, ros::NodeHandle node_handle);
+    void displayResultTrajectory(ros::NodeHandle node_handle);
 };
 
 

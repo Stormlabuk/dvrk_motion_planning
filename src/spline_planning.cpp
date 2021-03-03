@@ -33,15 +33,8 @@ int main(int argc, char** argv) {
     // ### LOAD PLANNER PLUGIN ###
     planning_interface::PlannerManagerPtr planner_instance = MoveItDVRKPlanning::loadPlannerPlugin(node_handle,mid.robot_model);
 
-    // ################
-    // ### VISUALIS ###
-    // ################
-    moveit_visual_tools::MoveItVisualTools visual_tools("world");
-    MoveItDVRKPlanning::setupRVizVisualisation(visual_tools, mid.planning_scene);
-
-    // ################
-    // ### PLANNING ###
-    // ################
+    // ### SETUP PLANNING SCENE ###
+    mid.setupPlanningScene();
 
     // ### DEFINE WAYPOINTS ###
     mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
@@ -63,9 +56,8 @@ int main(int argc, char** argv) {
     context->setMotionPlanRequest(mid.req);
     context->solve(mid.res);
 
-
     // ### SHOW RESULT TRAJECTORY ###
-    mid.displayResultTrajectory(visual_tools, node_handle);
+    mid.displayResultTrajectory(node_handle);
 
 }
 

@@ -128,7 +128,7 @@ MoveItDVRKPlanning::MoveItDVRKPlanning(){
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
 }
 
-void MoveItDVRKPlanning::setupRVizVisualisation(moveit_visual_tools::MoveItVisualTools visual_tools,  planning_scene::PlanningScenePtr planning_scene) {
+void MoveItDVRKPlanning::setupPlanningScene() {
     visual_tools.loadRobotStatePub("/display_robot_state");
     visual_tools.enableBatchPublishing();
     visual_tools.deleteAllMarkers();  // clear all old markers
@@ -137,8 +137,6 @@ void MoveItDVRKPlanning::setupRVizVisualisation(moveit_visual_tools::MoveItVisua
     visual_tools.trigger();
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
     visual_tools.trigger();
-
-
 }
 
 moveit_msgs::Constraints MoveItDVRKPlanning::computeGoalConstraint(geometry_msgs::Pose goal_pose){
@@ -163,7 +161,7 @@ void MoveItDVRKPlanning::compileMotionPlanRequest(moveit_msgs::Constraints goal_
 
 }
 
-void MoveItDVRKPlanning::displayResultTrajectory(moveit_visual_tools::MoveItVisualTools visual_tools, ros::NodeHandle node_handle){
+void MoveItDVRKPlanning::displayResultTrajectory(ros::NodeHandle node_handle){
     ros::Publisher display_publisher =
             node_handle.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
     moveit_msgs::DisplayTrajectory display_trajectory;
