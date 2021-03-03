@@ -9,6 +9,7 @@
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <boost/scoped_ptr.hpp>
 #include <moveit_visual_tools/moveit_visual_tools.h>
+#include <stomp_moveit/stomp_planner.h>
 #include <moveit/kinematic_constraints/utils.h>
 
 std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char traj_ID) {
@@ -124,7 +125,6 @@ MoveItDVRKPlanning::MoveItDVRKPlanning(){
     tolerance_pose = std::vector<double> (3,0.01);
     tolerance_angle = std::vector<double> (3,0.01);
     max_vel_scaling_factor = 0.04;
-    move_group_name = "psm_arm";
 }
 
 void MoveItDVRKPlanning::setupRVizVisualisation(moveit_visual_tools::MoveItVisualTools visual_tools,  planning_scene::PlanningScenePtr planning_scene) {
@@ -150,5 +150,14 @@ moveit_msgs::Constraints MoveItDVRKPlanning::computeGoalConstraint(geometry_msgs
             kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
 
     return goal_cons;
+
+}
+
+void MoveItDVRKPlanning::compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory, robot_state::RobotState start_state){
+    req.group_name = move_group_name;
+    req.goal_constraints.push_back(goal_constraint);
+    req.allowed_planning_time = 10.;
+    req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
+    moveit::core::robotStateToRobotStateMsg(start_state, req.start_state);
 
 }

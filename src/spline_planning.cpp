@@ -53,11 +53,13 @@ int main(int argc, char** argv) {
     // ################
     // ### PLANNING ###
     // ################
-    planning_interface::MotionPlanRequest req;
-    planning_interface::MotionPlanResponse res;
+//    planning_interface::MotionPlanRequest req;
+//    planning_interface::MotionPlanResponse res;
 
+    // ### DEFINE WAYPOINTS ###
     mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
 
+    // EVALUATE CARTESIAN PATH TO SMOOTH WITH STOMP
     start_state.setFromIK(joint_model_group, mid.waypoints.at(0));
     move_group.setStartState(start_state);
     move_group.setMaxVelocityScalingFactor(mid.max_vel_scaling_factor);
@@ -68,16 +70,11 @@ int main(int argc, char** argv) {
     // ### DEFINE GOAL POSE AND EVALUATE ITS CONSTRAINT ###
     moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(2));
 
-    req.group_name = mid.move_group_name;
-    req.goal_constraints.push_back(pose_goal_end);
-    req.allowed_planning_time = 10.;
-    req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
-    moveit::core::robotStateToRobotStateMsg(start_state, req.start_state);
-    planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, req, res.error_code_);
+    mid.compileMotionPlanRequest(pose_goal_end, trajectory, start_state);
 
-    context->setMotionPlanRequest(req);
-
-    context->solve(res);
+    planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(planning_scene, mid.req, mid.res.error_code_);
+    context->setMotionPlanRequest(mid.req);
+    context->solve(mid.res);
 
 
     // ### SHOW RESULT TRAJECTORY ###
@@ -86,7 +83,7 @@ int main(int argc, char** argv) {
     moveit_msgs::DisplayTrajectory display_trajectory;
 
     moveit_msgs::MotionPlanResponse response;
-    res.getMessage(response);
+    mid.res.getMessage(response);
     display_trajectory.trajectory_start = response.trajectory_start;
     display_trajectory.trajectory.push_back(response.trajectory);
     visual_tools.publishTrajectoryLine(display_trajectory.trajectory.back(), joint_model_group);

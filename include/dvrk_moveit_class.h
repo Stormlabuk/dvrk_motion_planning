@@ -22,10 +22,10 @@ public:
     float max_vel_scaling_factor;
     const double jump_threshold = 0.0;
     const double eef_step = 0.01;
-    std::string move_group_name;
+    std::string move_group_name = "psm_arm";
     std::vector<geometry_msgs::Pose> waypoints;
-//    planning_interface::MotionPlanRequest req;
-//    planning_interface::MotionPlanResponse res;
+    planning_interface::MotionPlanRequest req;
+    planning_interface::MotionPlanResponse res;
 
 
     MoveItDVRKPlanning();
@@ -33,6 +33,7 @@ public:
     static planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle, robot_model::RobotModelPtr robot_model);
     static void setupRVizVisualisation(moveit_visual_tools::MoveItVisualTools visual_tools,  planning_scene::PlanningScenePtr planning_scene);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
+    void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory, robot_state::RobotState start_state);
 };
 
 
