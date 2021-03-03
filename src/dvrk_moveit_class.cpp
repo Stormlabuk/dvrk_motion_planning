@@ -9,6 +9,7 @@
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <boost/scoped_ptr.hpp>
 #include <moveit_visual_tools/moveit_visual_tools.h>
+#include <moveit/kinematic_constraints/utils.h>
 
 std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char traj_ID) {
     //waypooints vector
@@ -136,5 +137,18 @@ void MoveItDVRKPlanning::setupRVizVisualisation(moveit_visual_tools::MoveItVisua
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
     visual_tools.trigger();
 
+
+}
+
+moveit_msgs::Constraints MoveItDVRKPlanning::computeGoalConstraint(geometry_msgs::Pose goal_pose){
+
+    geometry_msgs::PoseStamped pose_end;
+    pose_end.header.frame_id = "world";
+    pose_end.pose = goal_pose;
+
+    moveit_msgs::Constraints goal_cons =
+            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, tolerance_pose, tolerance_angle);
+
+    return goal_cons;
 
 }

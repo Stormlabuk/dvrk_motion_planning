@@ -55,7 +55,6 @@ int main(int argc, char** argv) {
     // ################
     planning_interface::MotionPlanRequest req;
     planning_interface::MotionPlanResponse res;
-    req.group_name = mid.move_group_name;
 
     mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
 
@@ -66,14 +65,10 @@ int main(int argc, char** argv) {
     moveit_msgs::RobotTrajectory trajectory;
     double fraction = move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory);
 
-    
-    geometry_msgs::PoseStamped pose_end;
-    pose_end.header.frame_id = "world";
-    pose_end.pose = mid.waypoints.at(2);
+    // ### DEFINE GOAL POSE AND EVALUATE ITS CONSTRAINT ###
+    moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(2));
 
-    moveit_msgs::Constraints pose_goal_end =
-            kinematic_constraints::constructGoalConstraints("psm_tool_tip_link", pose_end, mid.tolerance_pose, mid.tolerance_angle);
-
+    req.group_name = mid.move_group_name;
     req.goal_constraints.push_back(pose_goal_end);
     req.allowed_planning_time = 10.;
     req.trajectory_constraints = stomp_moveit::StompPlanner::encodeSeedTrajectory(trajectory.joint_trajectory);
@@ -84,6 +79,8 @@ int main(int argc, char** argv) {
 
     context->solve(res);
 
+
+    // ### SHOW RESULT TRAJECTORY ###
     ros::Publisher display_publisher =
             node_handle.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
     moveit_msgs::DisplayTrajectory display_trajectory;

@@ -24,12 +24,15 @@ public:
     const double eef_step = 0.01;
     std::string move_group_name;
     std::vector<geometry_msgs::Pose> waypoints;
+//    planning_interface::MotionPlanRequest req;
+//    planning_interface::MotionPlanResponse res;
 
 
     MoveItDVRKPlanning();
     static std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
     static planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle, robot_model::RobotModelPtr robot_model);
     static void setupRVizVisualisation(moveit_visual_tools::MoveItVisualTools visual_tools,  planning_scene::PlanningScenePtr planning_scene);
+    moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
 };
 
 
