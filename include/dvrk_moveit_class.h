@@ -50,7 +50,7 @@ public:
 
     MoveItDVRKPlanning();
     static std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
-    static planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle, robot_model::RobotModelPtr robot_model);
+    planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
     void setupPlanningScene();
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory, robot_state::RobotState start_state);

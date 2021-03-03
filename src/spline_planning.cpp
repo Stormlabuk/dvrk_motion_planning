@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     MoveItDVRKPlanning mid;
 
     // ### LOAD PLANNER PLUGIN ###
-    planning_interface::PlannerManagerPtr planner_instance = MoveItDVRKPlanning::loadPlannerPlugin(node_handle,mid.robot_model);
+    planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin(node_handle);
 
     // ### SETUP PLANNING SCENE ###
     mid.setupPlanningScene();

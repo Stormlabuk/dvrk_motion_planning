@@ -83,7 +83,7 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
     return waypoints;
 }
 
-planning_interface::PlannerManagerPtr MoveItDVRKPlanning::loadPlannerPlugin(ros::NodeHandle node_handle, robot_model::RobotModelPtr robot_model) {
+planning_interface::PlannerManagerPtr MoveItDVRKPlanning::loadPlannerPlugin(ros::NodeHandle node_handle) {
     boost::scoped_ptr<pluginlib::ClassLoader<planning_interface::PlannerManager>> planner_plugin_loader;
     planning_interface::PlannerManagerPtr planner_instance;
     std::string planner_plugin_name;
