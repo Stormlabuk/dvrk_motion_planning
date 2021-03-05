@@ -114,10 +114,6 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getRandomWaypointsVector(in
 
     for (int i = 0; i < n; i++) {
         geometry_msgs::PoseStamped tpose = move_group.getRandomPose(eef_name);
-//        tpose.pose.orientation.x = 0.;
-//        tpose.pose.orientation.y = 0.;
-//        tpose.pose.orientation.z = 0.;
-//        tpose.pose.orientation.w = 1.;
         waypoints.push_back(tpose.pose);
     }
 
@@ -228,4 +224,16 @@ void MoveItDVRKPlanning::displayResultTrajectory(ros::NodeHandle node_handle){
 
 
     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+}
+
+void MoveItDVRKPlanning::checkWaypointsValidity(std::vector<geometry_msgs::Pose> wp_vector){
+
+    ROS_INFO("Waypoints pose validity check:");
+
+    for (int i = 0; i<3; i++){
+        if(move_group.setJointValueTarget(wp_vector.at(i),"psm_tool_tip_link")){
+            ROS_INFO("Waypoints #%d: VALID", i);
+        } else{ ROS_ERROR("!!! Waypoints #%d: INVALID",i);}
+    }
+
 }

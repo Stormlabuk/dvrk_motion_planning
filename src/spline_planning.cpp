@@ -34,15 +34,7 @@ int main(int argc, char** argv) {
 
     // ### DEFINE WAYPOINTS ###
     mid.waypoints = mid.getWaypointsVector('L');
-    ROS_INFO("### Waypoints pose validity check:");
-    std::vector<bool> wp_validity;
-    for (int i = 0; i<3; i++){
-        if(mid.move_group.setJointValueTarget(mid.waypoints.at(i),"psm_tool_tip_link")){
-            ROS_INFO("### Waypoints #%d: VALID", i);
-        } else{ ROS_ERROR("### Waypoints #%d: INVALID",i);}
-    }
-
-
+    mid.checkWaypointsValidity(mid.waypoints);
 
     // EVALUATE CARTESIAN PATH TO SMOOTH WITH STOMP
     mid.start_state.setFromIK(mid.joint_model_group, mid.home_pose); // set start state as first point of waypoints
