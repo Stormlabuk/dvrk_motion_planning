@@ -51,7 +51,6 @@ public:
 
     MoveItDVRKPlanning();
     std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
-    static std::vector<geometry_msgs::Pose> getSeededWaypointsVector(char traj_ID, float margin);
     std::vector<geometry_msgs::Pose> getRandomWaypointsVector(int n, std::string eef_name = "psm_tool_tip_link");
     planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
