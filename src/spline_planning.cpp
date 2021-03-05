@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
     spinner.start();
     ros::NodeHandle node_handle("~");
 
-    MoveItDVRKPlanning mid;
+    MoveItDVRKPlanning mid; //aggiungere funzione che restituisce v o F se la traiettoria é feasible o no
 
     // ### LOAD PLANNER PLUGIN ###
     planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin(node_handle);
@@ -33,14 +33,14 @@ int main(int argc, char** argv) {
     mid.setupPlanningScene();
 
     // ### DEFINE WAYPOINTS ###
-    mid.waypoints = MoveItDVRKPlanning::getWaypointsVector('L');
-//    mid.waypoints = mid.getRandomWaypointsVector();
+    mid.waypoints = mid.getWaypointsVector('L');
 
     // EVALUATE CARTESIAN PATH TO SMOOTH WITH STOMP
-    mid.start_state.setFromIK(mid.joint_model_group, mid.waypoints.at(0));
+    mid.start_state.setFromIK(mid.joint_model_group, mid.home_pose); // set start state as first point of waypoints
     mid.move_group.setStartState(mid.start_state);
     mid.move_group.setMaxVelocityScalingFactor(mid.max_vel_scaling_factor);
 
+    // Check validity of waypoints
     moveit_msgs::RobotTrajectory trajectory;
     double fraction = mid.move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory);
 

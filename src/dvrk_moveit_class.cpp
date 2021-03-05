@@ -21,12 +21,17 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
     geometry_msgs::Pose tpose_2;
     geometry_msgs::Pose tpose_3;
 
+    home_pose.position.x = 0.02;
+    home_pose.position.y = 0.02;
+    home_pose.position.z = -0.09;
+    home_pose.orientation.w = 1;
+
     // waypoints for left trajectory (L)
     if(traj_ID == 'L'){
         tpose_1.position.x = 0.11;
         tpose_1.position.y = 0.07;
         tpose_1.position.z = -0.07;
-        tpose_1.orientation.w = 0.4;
+        tpose_1.orientation.w = 1.;
 
         tpose_2.position.x = 0.06;
         tpose_2.position.y = 0.05;
@@ -44,7 +49,7 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
         tpose_1.position.x = -0.08;
         tpose_1.position.y = 0.02;
         tpose_1.position.z = -0.05;
-        tpose_1.orientation.w = 0.4;
+        tpose_1.orientation.w = 1;
 
         tpose_2.position.x = 0.0;
         tpose_2.position.y = 0.05;
@@ -62,7 +67,7 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
         tpose_1.position.x = 0.02;
         tpose_1.position.y = 0.03;
         tpose_1.position.z = -0.03;
-        tpose_1.orientation.w = 0.4;
+        tpose_1.orientation.w = 1;
 
         tpose_2.position.x = -0.02;
         tpose_2.position.y = 0.05;
@@ -83,18 +88,26 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
     return waypoints;
 }
 
-std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getRandomWaypointsVector(std::string eef_name){
+static std::vector<geometry_msgs::Pose> getSeededWaypointsVector(char traj_ID, float margin){
+
+//    float r2 = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/));
+
+}
+
+std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getRandomWaypointsVector(int n, std::string eef_name){
 
     std::vector<geometry_msgs::Pose> waypoints;
 
     // points -> waypoints
-    geometry_msgs::PoseStamped tpose_1 = move_group.getRandomPose(eef_name);
-    geometry_msgs::PoseStamped tpose_2 = move_group.getRandomPose(eef_name);
-    geometry_msgs::PoseStamped tpose_3 = move_group.getRandomPose(eef_name);
 
-    waypoints.push_back(tpose_1.pose);
-    waypoints.push_back(tpose_2.pose);
-    waypoints.push_back(tpose_3.pose);
+    for (int i = 0; i < n; i++) {
+        geometry_msgs::PoseStamped tpose = move_group.getRandomPose(eef_name);
+//        tpose.pose.orientation.x = 0.;
+//        tpose.pose.orientation.y = 0.;
+//        tpose.pose.orientation.z = 0.;
+//        tpose.pose.orientation.w = 1.;
+        waypoints.push_back(tpose.pose);
+    }
 
     return waypoints;
 }

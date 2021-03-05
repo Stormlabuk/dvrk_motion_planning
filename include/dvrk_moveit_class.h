@@ -36,7 +36,8 @@ public:
     planning_interface::MotionPlanResponse res;
     float max_vel_scaling_factor;
     const double jump_threshold = 0.0;
-    const double eef_step = 0.01;
+    const double eef_step = 0.001;
+    geometry_msgs::Pose home_pose;
 
     moveit::planning_interface::MoveGroupInterface move_group = moveit::planning_interface::MoveGroupInterface(move_group_name);
     robot_model_loader::RobotModelLoader robot_model_loader = robot_model_loader::RobotModelLoader("robot_description");
@@ -49,8 +50,9 @@ public:
 
 
     MoveItDVRKPlanning();
-    static std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
-    std::vector<geometry_msgs::Pose> getRandomWaypointsVector(std::string eef_name = "psm_tool_tip_link");
+    std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
+    static std::vector<geometry_msgs::Pose> getSeededWaypointsVector(char traj_ID, float margin);
+    std::vector<geometry_msgs::Pose> getRandomWaypointsVector(int n, std::string eef_name = "psm_tool_tip_link");
     planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
     void setupPlanningScene();
