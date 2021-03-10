@@ -39,6 +39,7 @@ public:
     const double eef_step = 0.001;
     geometry_msgs::Pose home_pose;
 
+
     moveit::planning_interface::MoveGroupInterface move_group = moveit::planning_interface::MoveGroupInterface(move_group_name);
     robot_model_loader::RobotModelLoader robot_model_loader = robot_model_loader::RobotModelLoader("robot_description");
     robot_model::RobotModelPtr robot_model = robot_model_loader.getModel();
@@ -57,6 +58,7 @@ public:
     void setupPlanningScene();
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory);
     void displayResultTrajectory(ros::NodeHandle node_handle);
+    void displayWaypoints();
     void checkWaypointsValidity(std::vector<geometry_msgs::Pose> wp_vector);
     void checkPoseValidity(geometry_msgs::Pose);
 };

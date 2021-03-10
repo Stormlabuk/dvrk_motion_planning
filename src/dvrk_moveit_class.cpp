@@ -11,6 +11,7 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 #include <stomp_moveit/stomp_planner.h>
 #include <moveit/kinematic_constraints/utils.h>
+#include <sstream>
 
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
@@ -26,7 +27,12 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
     home_pose.position.x = 0.02;
     home_pose.position.y = 0.02;
     home_pose.position.z = -0.09;
-    home_pose.orientation.x = 1;
+//    home_pose.orientation.x = 1;
+
+    home_pose.orientation.x = -0.7071068;
+    home_pose.orientation.y = 0;
+    home_pose.orientation.z = 0;
+    home_pose.orientation.w = 0.7071068;
 
     // waypoints for left trajectory (L)
     if(traj_ID == 'L'){
@@ -215,6 +221,14 @@ void MoveItDVRKPlanning::displayResultTrajectory(ros::NodeHandle node_handle){
 
 
     visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+}
+
+void MoveItDVRKPlanning::displayWaypoints(){
+    for (int i = 0; i < waypoints.size(); i++){
+        std::ostringstream goal_n;
+        goal_n << "goal_" << i << std::endl;
+        visual_tools.publishAxisLabeled(waypoints.at(0), goal_n.str());
+    }
 }
 
 void MoveItDVRKPlanning::checkWaypointsValidity(std::vector<geometry_msgs::Pose> wp_vector){
