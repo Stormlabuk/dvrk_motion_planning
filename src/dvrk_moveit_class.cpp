@@ -32,28 +32,28 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
         tpose_1.position.y = 0.07;
         tpose_1.position.z = -0.07;
 //        tpose_1.orientation.w = 1;
-        tpose_1.orientation.x = 0.7071068;
-        tpose_1.orientation.y = 0;
-        tpose_1.orientation.z = 0;
-        tpose_1.orientation.w = -0.7071068;
+        tpose_1.orientation.w = 1;
+//        tpose_1.orientation.y = 0;
+//        tpose_1.orientation.z = 0;
+//        tpose_1.orientation.w = -0.7071068;
 
         tpose_2.position.x = 0.06;
         tpose_2.position.y = 0.05;
         tpose_2.position.z = -0.05;
 //        tpose_2.orientation.w = 1.0;
-        tpose_2.orientation.x = 0.7071068;
-        tpose_2.orientation.y = 0;
-        tpose_2.orientation.z = 0;
-        tpose_2.orientation.w = -0.7071068;
+        tpose_2.orientation.w = 1;
+//        tpose_2.orientation.y = 0;
+//        tpose_2.orientation.z = 0;
+//        tpose_2.orientation.w = -0.7071068;
 
         tpose_3.position.x = 0.02;
         tpose_3.position.y = 0.09;
         tpose_3.position.z = -0.09;
 //        tpose_3.orientation.w = 1;
-        tpose_3.orientation.x = 0.7071068;
-        tpose_3.orientation.y = 0;
-        tpose_3.orientation.z = 0;
-        tpose_3.orientation.w = -0.7071068;
+        tpose_3.orientation.w = 1;
+//        tpose_3.orientation.y = 0;
+//        tpose_3.orientation.z = 0;
+//        tpose_3.orientation.w = -0.7071068;
     }
 
     if (traj_ID == 'R'){
@@ -61,17 +61,29 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
         tpose_1.position.x = -0.08;
         tpose_1.position.y = 0.02;
         tpose_1.position.z = -0.05;
-        tpose_1.orientation.w = 1;
+//        tpose_1.orientation.w = 1;
+        tpose_1.orientation.x = 1;
+//        tpose_1.orientation.y = 0;
+//        tpose_1.orientation.z = 0;
+//        tpose_1.orientation.w = -0.7071068;
 
         tpose_2.position.x = 0.0;
         tpose_2.position.y = 0.05;
         tpose_2.position.z = -0.05;
-        tpose_2.orientation.w = 1.0;
+//        tpose_2.orientation.w = 1.0;
+        tpose_1.orientation.x = 1;
+//        tpose_1.orientation.y = 0;
+//        tpose_1.orientation.z = 0;
+//        tpose_1.orientation.w = -0.7071068;
 
         tpose_3.position.x = 0.06;
         tpose_3.position.y = 0.02;
         tpose_3.position.z = -0.04;
-        tpose_3.orientation.w = 1;
+//        tpose_3.orientation.w = 1;
+        tpose_1.orientation.x = 1;
+//        tpose_1.orientation.y = 0;
+//        tpose_1.orientation.z = 0;
+//        tpose_1.orientation.w = -0.7071068;
     }
 
     if (traj_ID == 'B'){
