@@ -12,6 +12,8 @@
 #include <stomp_moveit/stomp_planner.h>
 #include <moveit/kinematic_constraints/utils.h>
 
+#define GET_VARIABLE_NAME(Variable) (#Variable)
+
 std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char traj_ID) {
     //waypooints vector
     std::vector<geometry_msgs::Pose> waypoints;
@@ -31,29 +33,18 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
         tpose_1.position.x = 0.11;
         tpose_1.position.y = 0.07;
         tpose_1.position.z = -0.07;
-//        tpose_1.orientation.w = 1;
-        tpose_1.orientation.w = 1;
-//        tpose_1.orientation.y = 0;
-//        tpose_1.orientation.z = 0;
-//        tpose_1.orientation.w = -0.7071068;
+        tpose_1.orientation = home_pose.orientation;
 
         tpose_2.position.x = 0.06;
         tpose_2.position.y = 0.05;
         tpose_2.position.z = -0.05;
-//        tpose_2.orientation.w = 1.0;
-        tpose_2.orientation.w = 1;
-//        tpose_2.orientation.y = 0;
-//        tpose_2.orientation.z = 0;
-//        tpose_2.orientation.w = -0.7071068;
+        tpose_2.orientation = home_pose.orientation;
 
         tpose_3.position.x = 0.02;
         tpose_3.position.y = 0.09;
         tpose_3.position.z = -0.09;
-//        tpose_3.orientation.w = 1;
-        tpose_3.orientation.w = 1;
-//        tpose_3.orientation.y = 0;
-//        tpose_3.orientation.z = 0;
-//        tpose_3.orientation.w = -0.7071068;
+        tpose_3.orientation = home_pose.orientation;
+
     }
 
     if (traj_ID == 'R'){
@@ -242,10 +233,20 @@ void MoveItDVRKPlanning::checkWaypointsValidity(std::vector<geometry_msgs::Pose>
 
     ROS_INFO("Waypoints pose validity check:");
 
-    for (int i = 0; i<3; i++){
+    for (int i = 0; i< wp_vector.size(); i++){
         if(move_group.setJointValueTarget(wp_vector.at(i),"psm_tool_tip_link")){
             ROS_INFO("Waypoints #%d: VALID", i);
         } else{ ROS_ERROR("!!! Waypoints #%d: INVALID",i);}
     }
+
+}
+
+void MoveItDVRKPlanning::checkPoseValidity(geometry_msgs::Pose pose){
+
+    ROS_INFO("Pose validity check:");
+//    string pose_name = GET_VARIABLE_NAME(pose);
+        if(move_group.setJointValueTarget(pose,"psm_tool_tip_link")){
+            ROS_INFO("Pose %s: VALID", GET_VARIABLE_NAME(pose));
+        } else{ ROS_ERROR("!!! Pose %s: INVALID",GET_VARIABLE_NAME(pose));}
 
 }

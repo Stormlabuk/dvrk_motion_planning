@@ -26,10 +26,11 @@ int main(int argc, char** argv) {
 
     // ### DEFINE WAYPOINTS ###
     mid.waypoints = mid.getWaypointsVector('L');
+    mid.checkPoseValidity(mid.home_pose);
     mid.checkWaypointsValidity(mid.waypoints);
 
     // EVALUATE CARTESIAN PATH TO SMOOTH WITH STOMP
-    mid.start_state.setFromIK(mid.joint_model_group, mid.home_pose); // set start state as first point of waypoints
+    mid.start_state.setFromIK(mid.joint_model_group, mid.home_pose); // set start state as home_pose
     mid.move_group.setStartState(mid.start_state);
     mid.move_group.setMaxVelocityScalingFactor(mid.max_vel_scaling_factor);
 

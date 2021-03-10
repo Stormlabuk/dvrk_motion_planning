@@ -58,6 +58,7 @@ public:
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory);
     void displayResultTrajectory(ros::NodeHandle node_handle);
     void checkWaypointsValidity(std::vector<geometry_msgs::Pose> wp_vector);
+    void checkPoseValidity(geometry_msgs::Pose);
 };
 
 
