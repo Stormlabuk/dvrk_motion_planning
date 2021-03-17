@@ -43,8 +43,9 @@ int main(int argc, char** argv) {
     moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(2));
     mid.compileMotionPlanRequest(pose_goal_end, trajectory);
 
+    std::vector<geometry_msgs::Pose> pose_trajectory;
 
-    for (int i = 1; i<trajectory.joint_trajectory.points.size(); i++) {
+    for (int i = 0; i<trajectory.joint_trajectory.points.size(); i++) {
         std::vector<double> joint_values;
 
         for (int k = 0; k<trajectory.joint_trajectory.joint_names.size(); k++) {
@@ -55,23 +56,32 @@ int main(int argc, char** argv) {
         const Eigen::Affine3d &link_pose = mid.robot_state->getGlobalLinkTransform("psm_tool_tip_link");
         Eigen::Vector3d cartesian_position = link_pose.translation();
         Eigen::Matrix3d link_orientation = link_pose.rotation();
-//        Eigen::Quaternionf rot_quat(link_orientation);
+        Eigen::Quaterniond rot_quat(link_orientation);
 
         // populate Pose Message
         geometry_msgs::Pose tp;
         tp.position.x = cartesian_position.x();
         tp.position.y = cartesian_position.y();
         tp.position.z = cartesian_position.z();
-//        tp.orientation.w = rot_quat.w();
-//        tp.orientation.x = rot_quat.x();
-//        tp.orientation.y = rot_quat.y();
-//        tp.orientation.z = rot_quat.z();
+        tp.orientation.w = rot_quat.w();
+        tp.orientation.x = rot_quat.x();
+        tp.orientation.y = rot_quat.y();
+        tp.orientation.z = rot_quat.z();
 
         std::cout << "x: " << tp.position.x << std::endl;
         std::cout << "y: " << tp.position.y << std::endl;
         std::cout << "z: " << tp.position.z << std::endl;
-    }
 
+        std::cout << "w: " << tp.orientation.w << std::endl;
+        std::cout << "x: " << tp.orientation.x << std::endl;
+        std::cout << "y: " << tp.orientation.y << std::endl;
+        std::cout << "z: " << tp.orientation.z << std::endl;
+
+        pose_trajectory.push_back(tp);
+
+    }
+    std::cout << "JOINT TRAJECTORY HAS POINT: " << trajectory.joint_trajectory.points.size() << std::endl;
+    std::cout << "CARTESIAN TRAJECTORY HAS POINT " << pose_trajectory.size() << std::endl;
 
     // SOLVE REQUEST
     planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(mid.planning_scene, mid.req, mid.res.error_code_);
