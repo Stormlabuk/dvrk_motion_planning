@@ -219,8 +219,6 @@ void MoveItDVRKPlanning::displayResultTrajectory(ros::NodeHandle node_handle){
 
     visual_tools.trigger();
 
-
-    visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
 }
 
 void MoveItDVRKPlanning::displayWaypoints(){
