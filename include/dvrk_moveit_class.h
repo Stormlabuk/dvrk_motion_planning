@@ -32,6 +32,7 @@ public:
     std::vector<geometry_msgs::Pose> waypoints;
     std::vector<double> tolerance_pose;
     std::vector<double> tolerance_angle;
+    int dvrk_version;
     planning_interface::MotionPlanRequest req;
     planning_interface::MotionPlanResponse res;
     float max_vel_scaling_factor;
@@ -50,12 +51,13 @@ public:
     moveit_visual_tools::MoveItVisualTools visual_tools = moveit_visual_tools::MoveItVisualTools("world");
 
 
-    MoveItDVRKPlanning();
+    MoveItDVRKPlanning(int version = 1);
     std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
     std::vector<geometry_msgs::Pose> getRandomWaypointsVector(int n, std::string eef_name = "psm_tool_tip_link");
     planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
     std::vector<geometry_msgs::Pose> convertJointTrajectoryToCartesian ();
+    std::vector<sensor_msgs::JointState> convertJointTrajectoryToJointState ();
     void setupPlanningScene();
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory);
     void displayResultTrajectory(ros::NodeHandle node_handle);

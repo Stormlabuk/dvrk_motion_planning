@@ -155,11 +155,12 @@ planning_interface::PlannerManagerPtr MoveItDVRKPlanning::loadPlannerPlugin(ros:
     return planner_instance;
 }
 
-MoveItDVRKPlanning::MoveItDVRKPlanning(){
+MoveItDVRKPlanning::MoveItDVRKPlanning(int version){
     tolerance_pose = std::vector<double> (3,0.01);
     tolerance_angle = std::vector<double> (3,0.01);
     max_vel_scaling_factor = 0.04;
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
+    dvrk_version = version;
 
     home_pose.position.x = 0.02;
     home_pose.position.y = 0.02;
@@ -238,6 +239,26 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::convertJointTrajectoryToCar
         pose_trajectory.push_back(tp);
     }
     return pose_trajectory;
+}
+
+std::vector<sensor_msgs::JointState> MoveItDVRKPlanning::convertJointTrajectoryToJointState (){
+
+    std::vector<sensor_msgs::JointState> joint_trajectory;
+    moveit_msgs::MotionPlanResponse response;
+    res.getMessage(response);
+
+    for (int i = 0; i < response.trajectory.joint_trajectory.points.size(); i++) {
+
+        sensor_msgs::JointState joint_pose;
+        joint_pose.header = response.trajectory.joint_trajectory.header;
+        joint_pose.name = response.trajectory.joint_trajectory.joint_names;
+        joint_pose.position = response.trajectory.joint_trajectory.points[i].positions;
+        joint_pose.velocity = response.trajectory.joint_trajectory.points[i].velocities;
+
+        joint_trajectory.push_back(joint_pose);
+    }
+
+    return joint_trajectory;
 }
 
 void MoveItDVRKPlanning::compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory){

@@ -48,22 +48,8 @@ int main(int argc, char** argv) {
     planning_interface::PlanningContextPtr context = planner_instance->getPlanningContext(mid.planning_scene, mid.req, mid.res.error_code_);
     context->setMotionPlanRequest(mid.req);
     context->solve(mid.res);
-    
-    std::vector<sensor_msgs::JointState> joint_trajectory;
-    moveit_msgs::MotionPlanResponse response;
-    mid.res.getMessage(response);
 
-    for (int i = 0; i < response.trajectory.joint_trajectory.points.size(); i++) {
-
-        sensor_msgs::JointState joint_pose;
-        joint_pose.header = response.trajectory.joint_trajectory.header;
-        joint_pose.name = response.trajectory.joint_trajectory.joint_names;
-        joint_pose.position = response.trajectory.joint_trajectory.points[i].positions;
-        joint_pose.velocity = response.trajectory.joint_trajectory.points[i].velocities;
-
-        joint_trajectory.push_back(joint_pose);
-    }
-
+    std::vector<sensor_msgs::JointState> joint_trajectory = mid.convertJointTrajectoryToJointState();
     std::vector<geometry_msgs::Pose> pose_trajectory = mid.convertJointTrajectoryToCartesian();
 
     // ### SHOW RESULT TRAJECTORY ###
