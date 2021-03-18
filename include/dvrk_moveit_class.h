@@ -55,12 +55,14 @@ public:
     std::vector<geometry_msgs::Pose> getRandomWaypointsVector(int n, std::string eef_name = "psm_tool_tip_link");
     planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
+    std::vector<geometry_msgs::Pose> convertJointTrajectoryToCartesian ();
     void setupPlanningScene();
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory);
     void displayResultTrajectory(ros::NodeHandle node_handle);
     void displayWaypoints();
     void checkWaypointsValidity(std::vector<geometry_msgs::Pose> wp_vector);
     void checkPoseValidity(geometry_msgs::Pose);
+
 };
 
 

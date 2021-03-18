@@ -24,15 +24,15 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
     geometry_msgs::Pose tpose_2;
     geometry_msgs::Pose tpose_3;
 
-    home_pose.position.x = 0.02;
-    home_pose.position.y = 0.02;
-    home_pose.position.z = -0.09;
-//    home_pose.orientation.x = 1;
-
-    home_pose.orientation.x = -0.7071068;
-    home_pose.orientation.y = 0;
-    home_pose.orientation.z = 0;
-    home_pose.orientation.w = 0.7071068;
+//    home_pose.position.x = 0.02;
+//    home_pose.position.y = 0.02;
+//    home_pose.position.z = -0.09;
+////    home_pose.orientation.x = 1;
+//
+//    home_pose.orientation.x = -0.7071068;
+//    home_pose.orientation.y = 0;
+//    home_pose.orientation.z = 0;
+//    home_pose.orientation.w = 0.7071068;
 
     // waypoints for left trajectory (L)
     if(traj_ID == 'L'){
@@ -160,6 +160,16 @@ MoveItDVRKPlanning::MoveItDVRKPlanning(){
     tolerance_angle = std::vector<double> (3,0.01);
     max_vel_scaling_factor = 0.04;
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
+
+    home_pose.position.x = 0.02;
+    home_pose.position.y = 0.02;
+    home_pose.position.z = -0.09;
+//    home_pose.orientation.x = 1;
+
+    home_pose.orientation.x = -0.7071068;
+    home_pose.orientation.y = 0;
+    home_pose.orientation.z = 0;
+    home_pose.orientation.w = 0.7071068;
 }
 
 void MoveItDVRKPlanning::setupPlanningScene() {
@@ -184,6 +194,50 @@ moveit_msgs::Constraints MoveItDVRKPlanning::computeGoalConstraint(geometry_msgs
 
     return goal_cons;
 
+}
+
+std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::convertJointTrajectoryToCartesian (){
+
+    std::vector<geometry_msgs::Pose> pose_trajectory;
+    moveit_msgs::MotionPlanResponse response;
+    res.getMessage(response);
+
+    for (int i = 0; i<response.trajectory.joint_trajectory.points.size(); i++) {
+        std::vector<double> joint_values;
+
+        for (int k = 0; k<response.trajectory.joint_trajectory.joint_names.size(); k++) {
+            joint_values.push_back(response.trajectory.joint_trajectory.points[i].positions[k]);}
+
+        //initialize joint values
+        robot_state->setJointGroupPositions(joint_model_group->getName(), joint_values);
+        const Eigen::Affine3d &link_pose = robot_state->getGlobalLinkTransform("psm_tool_tip_link");
+        Eigen::Vector3d cartesian_position = link_pose.translation();
+        Eigen::Matrix3d link_orientation = link_pose.rotation();
+        Eigen::Quaterniond rot_quat(link_orientation);
+
+        // populate Pose Message
+        geometry_msgs::Pose tp;
+        tp.position.x = cartesian_position.x();
+        tp.position.y = cartesian_position.y();
+        tp.position.z = cartesian_position.z();
+        tp.orientation.w = rot_quat.w();
+        tp.orientation.x = rot_quat.x();
+        tp.orientation.y = rot_quat.y();
+        tp.orientation.z = rot_quat.z();
+
+        //VERBOSE
+        //std::cout << "x: " << tp.position.x << std::endl;
+//        std::cout << "y: " << tp.position.y << std::endl;
+//        std::cout << "z: " << tp.position.z << std::endl;
+//
+//        std::cout << "w: " << tp.orientation.w << std::endl;
+//        std::cout << "x: " << tp.orientation.x << std::endl;
+//        std::cout << "y: " << tp.orientation.y << std::endl;
+//        std::cout << "z: " << tp.orientation.z << std::endl;
+
+        pose_trajectory.push_back(tp);
+    }
+    return pose_trajectory;
 }
 
 void MoveItDVRKPlanning::compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory){
@@ -250,3 +304,4 @@ void MoveItDVRKPlanning::checkPoseValidity(geometry_msgs::Pose pose){
         } else{ ROS_ERROR("!!! Pose %s: INVALID",GET_VARIABLE_NAME(pose));}
 
 }
+
