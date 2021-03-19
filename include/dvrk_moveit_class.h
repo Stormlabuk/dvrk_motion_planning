@@ -29,6 +29,7 @@ class MoveItDVRKPlanning {
 
 public:
     std::string move_group_name = "psm_arm";
+    std::string arm_name;
     std::vector<geometry_msgs::Pose> waypoints;
     std::vector<double> tolerance_pose;
     std::vector<double> tolerance_angle;
@@ -41,6 +42,9 @@ public:
     geometry_msgs::Pose home_pose;
 
 
+    ros::Publisher cartesian_pub;
+
+
     moveit::planning_interface::MoveGroupInterface move_group = moveit::planning_interface::MoveGroupInterface(move_group_name);
     robot_model_loader::RobotModelLoader robot_model_loader = robot_model_loader::RobotModelLoader("robot_description");
     robot_model::RobotModelPtr robot_model = robot_model_loader.getModel();
@@ -51,13 +55,14 @@ public:
     moveit_visual_tools::MoveItVisualTools visual_tools = moveit_visual_tools::MoveItVisualTools("world");
 
 
-    MoveItDVRKPlanning(int version = 1);
+    MoveItDVRKPlanning(std::string arm, int version = 1);
     std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
     std::vector<geometry_msgs::Pose> getRandomWaypointsVector(int n, std::string eef_name = "psm_tool_tip_link");
     planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
     moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
     std::vector<geometry_msgs::Pose> convertJointTrajectoryToCartesian ();
     std::vector<sensor_msgs::JointState> convertJointTrajectoryToJointState ();
+    void setupDVRKTrajectoryPublisher(ros::NodeHandle node_handle);
     void setupPlanningScene();
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory);
     void displayResultTrajectory(ros::NodeHandle node_handle);

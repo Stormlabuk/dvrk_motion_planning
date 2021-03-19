@@ -1,7 +1,6 @@
 #include <ros/ros.h>
 #include <dvrk_moveit_class.h>
 #include <string.h>
-#include <moveit_msgs/GetPositionFK.h>
 
 // MoveIt!
 #include <moveit/planning_interface/planning_interface.h>
@@ -11,14 +10,15 @@
 
 int main(int argc, char** argv) {
 
-    const std::string node_name = "spline_planning";
-    ros::init(argc, argv, node_name);
+    ros::init(argc, argv, "spline_planning");
     ros::AsyncSpinner spinner(1);
     spinner.start();
     ros::NodeHandle node_handle("~");
-//    ros::Publisher chatter_pub = node_handle.advertise<geometry_msgs::Pose>("", 1000);
 
-    MoveItDVRKPlanning mid;
+    MoveItDVRKPlanning mid("PSM1", 2);
+
+    // ### SETUP PUBLISHERS FOR
+    mid.setupDVRKTrajectoryPublisher(node_handle);
 
     // ### LOAD PLANNER PLUGIN ###
     planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin(node_handle);

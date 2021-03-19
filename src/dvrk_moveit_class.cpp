@@ -155,12 +155,13 @@ planning_interface::PlannerManagerPtr MoveItDVRKPlanning::loadPlannerPlugin(ros:
     return planner_instance;
 }
 
-MoveItDVRKPlanning::MoveItDVRKPlanning(int version){
+MoveItDVRKPlanning::MoveItDVRKPlanning(std::string arm, int version){
     tolerance_pose = std::vector<double> (3,0.01);
     tolerance_angle = std::vector<double> (3,0.01);
     max_vel_scaling_factor = 0.04;
     planning_scene->getCurrentStateNonConst().setToDefaultValues(joint_model_group, "ready");
     dvrk_version = version;
+    arm_name = arm;
 
     home_pose.position.x = 0.02;
     home_pose.position.y = 0.02;
@@ -199,6 +200,7 @@ moveit_msgs::Constraints MoveItDVRKPlanning::computeGoalConstraint(geometry_msgs
 
 std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::convertJointTrajectoryToCartesian (){
 
+    if(dvrk_version == 1){
     std::vector<geometry_msgs::Pose> pose_trajectory;
     moveit_msgs::MotionPlanResponse response;
     res.getMessage(response);
@@ -236,9 +238,67 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::convertJointTrajectoryToCar
 //        std::cout << "y: " << tp.orientation.y << std::endl;
 //        std::cout << "z: " << tp.orientation.z << std::endl;
 
-        pose_trajectory.push_back(tp);
-    }
-    return pose_trajectory;
+        pose_trajectory.push_back(tp);}
+
+    return pose_trajectory;}
+
+    if(dvrk_version == 2){
+        std::vector<geometry_msgs::TransformStamped> pose_trajectory;
+        moveit_msgs::MotionPlanResponse response;
+        res.getMessage(response);
+
+        for (int i = 0; i<response.trajectory.joint_trajectory.points.size(); i++) {
+            std::vector<double> joint_values;
+
+            for (int k = 0; k<response.trajectory.joint_trajectory.joint_names.size(); k++) {
+                joint_values.push_back(response.trajectory.joint_trajectory.points[i].positions[k]);}
+
+            //initialize joint values
+            robot_state->setJointGroupPositions(joint_model_group->getName(), joint_values);
+            const Eigen::Affine3d &link_pose = robot_state->getGlobalLinkTransform("psm_tool_tip_link");
+            Eigen::Vector3d cartesian_position = link_pose.translation();
+            Eigen::Matrix3d link_orientation = link_pose.rotation();
+            Eigen::Quaterniond rot_quat(link_orientation);
+
+            // populate Pose Message
+            geometry_msgs::TransformStamped tp;
+            tp.header = response.trajectory.joint_trajectory.header;
+            tp.child_frame_id = "psm_tool_tip_link";
+            tp.transform.translation.x = cartesian_position.x();
+            tp.transform.translation.y = cartesian_position.y();
+            tp.transform.translation.z = cartesian_position.z();
+            tp.transform.rotation.w = rot_quat.w();
+            tp.transform.rotation.x = rot_quat.x();
+            tp.transform.rotation.y = rot_quat.y();
+            tp.transform.rotation.z = rot_quat.z();
+
+            //VERBOSE
+            //std::cout << "x: " << tp.position.x << std::endl;
+//        std::cout << "y: " << tp.position.y << std::endl;
+//        std::cout << "z: " << tp.position.z << std::endl;
+//
+//        std::cout << "w: " << tp.orientation.w << std::endl;
+//        std::cout << "x: " << tp.orientation.x << std::endl;
+//        std::cout << "y: " << tp.orientation.y << std::endl;
+//        std::cout << "z: " << tp.orientation.z << std::endl;
+
+            pose_trajectory.push_back(tp);}
+
+        return pose_trajectory;}
+}
+
+void MoveItDVRKPlanning::setupDVRKTrajectoryPublisher(ros::NodeHandle node_handle){
+
+    std::stringstream topic_name;
+
+    if (dvrk_version == 1){
+        topic_name << "/dvrk/" << arm_name << "/set_position_cartesian";
+        cartesian_pub = node_handle.advertise<geometry_msgs::Pose>(topic_name.str(), 1000);}
+
+    else if (dvrk_version==2){
+        topic_name << "/" << arm_name << "/setpoint_cp";
+        cartesian_pub = node_handle.advertise<geometry_msgs::TransformStamped>(topic_name.str(), 1000);}
+
 }
 
 std::vector<sensor_msgs::JointState> MoveItDVRKPlanning::convertJointTrajectoryToJointState (){
