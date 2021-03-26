@@ -89,10 +89,22 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
         tpose_3.orientation = home_pose.orientation;
     }
 
+    if (traj_ID == 'W'){
+        tpose_1.position.x = 0.07;
+        tpose_1.position.y = 0.03;
+        tpose_1.position.z = -0.05;
+        tpose_1.orientation = home_pose.orientation;
+
+        tpose_2.position.x = -0.07;
+        tpose_2.position.y = 0.03;
+        tpose_2.position.z = -0.05;
+        tpose_2.orientation = home_pose.orientation;
+    }
 
     waypoints.push_back(tpose_1);
     waypoints.push_back(tpose_2);
-    waypoints.push_back(tpose_3);
+    if (traj_ID != 'W'){ waypoints.push_back(tpose_3);}
+
 
     return waypoints;
 }
@@ -137,7 +149,7 @@ planning_interface::PlannerManagerPtr MoveItDVRKPlanning::loadPlannerPlugin(ros:
     try
     {
         planner_instance.reset(planner_plugin_loader->createUnmanagedInstance(planner_plugin_name));
-        std::string pippo = node_handle.getNamespace();
+//        std::string pippo = node_handle.getNamespace();
         if (!planner_instance->initialize(robot_model, "move_group"))
             ROS_FATAL_STREAM("Could not initialize planner instance");
         ROS_INFO_STREAM("Using planning interface '" << planner_instance->getDescription() << "'");
@@ -198,50 +210,47 @@ moveit_msgs::Constraints MoveItDVRKPlanning::computeGoalConstraint(geometry_msgs
 
 }
 
-std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::convertJointTrajectoryToCartesian (){
+std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::convertJointTrajectoryToCartesian () {
 
-    if(dvrk_version == 1){
     std::vector<geometry_msgs::Pose> pose_trajectory;
-    moveit_msgs::MotionPlanResponse response;
-    res.getMessage(response);
 
-    for (int i = 0; i<response.trajectory.joint_trajectory.points.size(); i++) {
-        std::vector<double> joint_values;
+    if (dvrk_version == 1) {
+        moveit_msgs::MotionPlanResponse response;
+        res.getMessage(response);
 
-        for (int k = 0; k<response.trajectory.joint_trajectory.joint_names.size(); k++) {
-            joint_values.push_back(response.trajectory.joint_trajectory.points[i].positions[k]);}
+        for (int i = 0; i < response.trajectory.joint_trajectory.points.size(); i++) {
+            std::vector<double> joint_values;
 
-        //initialize joint values
-        robot_state->setJointGroupPositions(joint_model_group->getName(), joint_values);
-        const Eigen::Affine3d &link_pose = robot_state->getGlobalLinkTransform("psm_tool_tip_link");
-        Eigen::Vector3d cartesian_position = link_pose.translation();
-        Eigen::Matrix3d link_orientation = link_pose.rotation();
-        Eigen::Quaterniond rot_quat(link_orientation);
+            for (int k = 0; k < response.trajectory.joint_trajectory.joint_names.size(); k++) {
+                joint_values.push_back(response.trajectory.joint_trajectory.points.at(i).positions.at(k));
+            }
 
-        // populate Pose Message
-        geometry_msgs::Pose tp;
-        tp.position.x = cartesian_position.x();
-        tp.position.y = cartesian_position.y();
-        tp.position.z = cartesian_position.z();
-        tp.orientation.w = rot_quat.w();
-        tp.orientation.x = rot_quat.x();
-        tp.orientation.y = rot_quat.y();
-        tp.orientation.z = rot_quat.z();
+            //initialize joint values
+            robot_state->setJointGroupPositions(joint_model_group->getName(), joint_values);
+            const Eigen::Affine3d &link_pose = robot_state->getGlobalLinkTransform("psm_tool_tip_link");
+            Eigen::Vector3d cartesian_position = link_pose.translation();
+            Eigen::Matrix3d link_orientation = link_pose.rotation();
+            Eigen::Quaterniond rot_quat(link_orientation);
 
-        //VERBOSE
-        //std::cout << "x: " << tp.position.x << std::endl;
-//        std::cout << "y: " << tp.position.y << std::endl;
-//        std::cout << "z: " << tp.position.z << std::endl;
-//
-//        std::cout << "w: " << tp.orientation.w << std::endl;
-//        std::cout << "x: " << tp.orientation.x << std::endl;
-//        std::cout << "y: " << tp.orientation.y << std::endl;
-//        std::cout << "z: " << tp.orientation.z << std::endl;
+            // populate Pose Message
+            geometry_msgs::Pose tp;
+            tp.position.x = cartesian_position.x();
+            tp.position.y = cartesian_position.y();
+            tp.position.z = cartesian_position.z();
+            tp.orientation.w = rot_quat.w();
+            tp.orientation.x = rot_quat.x();
+            tp.orientation.y = rot_quat.y();
+            tp.orientation.z = rot_quat.z();
 
-        pose_trajectory.push_back(tp);}
+            pose_trajectory.push_back(tp);
+        }
 
-    return pose_trajectory;}
+        return pose_trajectory;
+    } else { ROS_ERROR("DVRK version >= 2. Please, use convertJointTrajectoryToCartesianStamped instead.");
+                return pose_trajectory;}
+}
 
+std::vector<geometry_msgs::TransformStamped> MoveItDVRKPlanning::convertJointTrajectoryToCartesianStamped() {
     if(dvrk_version == 2){
         std::vector<geometry_msgs::TransformStamped> pose_trajectory;
         moveit_msgs::MotionPlanResponse response;
@@ -272,22 +281,12 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::convertJointTrajectoryToCar
             tp.transform.rotation.y = rot_quat.y();
             tp.transform.rotation.z = rot_quat.z();
 
-            //VERBOSE
-            //std::cout << "x: " << tp.position.x << std::endl;
-//        std::cout << "y: " << tp.position.y << std::endl;
-//        std::cout << "z: " << tp.position.z << std::endl;
-//
-//        std::cout << "w: " << tp.orientation.w << std::endl;
-//        std::cout << "x: " << tp.orientation.x << std::endl;
-//        std::cout << "y: " << tp.orientation.y << std::endl;
-//        std::cout << "z: " << tp.orientation.z << std::endl;
-
             pose_trajectory.push_back(tp);}
 
         return pose_trajectory;}
 }
 
-void MoveItDVRKPlanning::setupDVRKTrajectoryPublisher(ros::NodeHandle node_handle){
+void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(ros::NodeHandle node_handle){
 
     std::stringstream topic_name;
 
@@ -298,6 +297,7 @@ void MoveItDVRKPlanning::setupDVRKTrajectoryPublisher(ros::NodeHandle node_handl
     else if (dvrk_version==2){
         topic_name << "/" << arm_name << "/setpoint_cp";
         cartesian_pub = node_handle.advertise<geometry_msgs::TransformStamped>(topic_name.str(), 1000);}
+    else{ROS_ERROR("Unknown dVRK version! DVRK version (MoveItDVRKPlanning.dvrk_version) can be either 1 or 2.");}
 
 }
 
@@ -348,10 +348,12 @@ void MoveItDVRKPlanning::displayResultTrajectory(ros::NodeHandle node_handle){
     planning_scene->setCurrentState(*robot_state.get());
 
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
-    visual_tools.publishAxisLabeled(waypoints.at(0), "goal_1");
-    visual_tools.publishAxisLabeled(waypoints.at(1), "goal_2");
-    visual_tools.publishAxisLabeled(waypoints.at(2), "goal_3");
-
+    for (int i = 0; i < waypoints.size(); i++){
+        std::ostringstream goal_n;
+        goal_n << "goal_" << i << std::endl;
+        visual_tools.publishAxisLabeled(waypoints.at(i), goal_n.str());
+        goal_n.clear();
+    }
     visual_tools.trigger();
 
 }

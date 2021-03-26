@@ -28,22 +28,20 @@ class MoveItDVRKPlanning {
 
 
 public:
-    std::string move_group_name = "psm_arm";
-    std::string arm_name;
-    std::vector<geometry_msgs::Pose> waypoints;
-    std::vector<double> tolerance_pose;
-    std::vector<double> tolerance_angle;
-    int dvrk_version;
-    planning_interface::MotionPlanRequest req;
-    planning_interface::MotionPlanResponse res;
+    int dvrk_version;                           // dvrk version, can be 1 or 2
+    std::string move_group_name = "psm_arm";    // MoveIt move group name
+    std::string arm_name;                       // Arm name, used to gather the dvrk ROS topics
+    std::vector<geometry_msgs::Pose> waypoints; // Trajectory waypoints
+    std::vector<double> tolerance_pose;         // Translational tolerance for cartesian path evaluation
+    std::vector<double> tolerance_angle;        // Rotational tolerance for cartesian path evaluation
+    planning_interface::MotionPlanRequest req;  // MoveIt planning request
+    planning_interface::MotionPlanResponse res; // MoveIt planning response
     float max_vel_scaling_factor;
     const double jump_threshold = 0.0;
-    const double eef_step = 0.001;
-    geometry_msgs::Pose home_pose;
-
+    const double eef_step = 0.001;              // max end effector step used during trajectory evaluation
+    geometry_msgs::Pose home_pose;              // home pose for the robot
 
     ros::Publisher cartesian_pub;
-
 
     moveit::planning_interface::MoveGroupInterface move_group = moveit::planning_interface::MoveGroupInterface(move_group_name);
     robot_model_loader::RobotModelLoader robot_model_loader = robot_model_loader::RobotModelLoader("robot_description");
@@ -53,21 +51,80 @@ public:
     robot_state::RobotState start_state = robot_state::RobotState(*move_group.getCurrentState()); // initial state of the robot
     planning_scene::PlanningScenePtr planning_scene = std::make_shared<planning_scene::PlanningScene>(robot_model);
     moveit_visual_tools::MoveItVisualTools visual_tools = moveit_visual_tools::MoveItVisualTools("world");
+    moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
+    // ####################
+    // ### CONSTRUCTORS ###
+    // ####################
 
     MoveItDVRKPlanning(std::string arm, int version = 1);
-    std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
-    std::vector<geometry_msgs::Pose> getRandomWaypointsVector(int n, std::string eef_name = "psm_tool_tip_link");
-    planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
-    moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
-    std::vector<geometry_msgs::Pose> convertJointTrajectoryToCartesian ();
-    std::vector<sensor_msgs::JointState> convertJointTrajectoryToJointState ();
-    void setupDVRKTrajectoryPublisher(ros::NodeHandle node_handle);
+
+    // #######################
+    // ### SETUP FUNCTIONS ###
+    // #######################
+
+    // --- setupDVRKCartesianTrajectoryPublisher: this function sets up the publisher to the right dVRK topic depending on
+    // the software version. Different dVRK versions publish on different topics and different messages.
+    void setupDVRKCartesianTrajectoryPublisher(ros::NodeHandle node_handle);
+
+    // --- setupPlanningScene: planning scene is first cleared and than populated with the robot model.
     void setupPlanningScene();
+
+    // --- loadPlannerPlugin: class loader is used to load the planning plugin. In this specific case the planner used
+    // is STOMP (https://ros-planning.github.io/moveit_tutorials/doc/stomp_planner/stomp_planner_tutorial.html)
+    planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
+
+    // ############################
+    // ### TRAJECTORY FUNCTIONS ###
+    // ############################
+
+    // --- getWaypointsVector: this function returns a fixed set of waypoints for the trajectory. The traj_ID defines
+    // which waypoints to use. Available traj_ID: 'L' (left), 'R' (right), 'B' (bottom),
+    std::vector<geometry_msgs::Pose> getWaypointsVector(char traj_ID);
+
+    // --- getRandomWaypointsVector: returns a random set of <n> points. This points, defined as geometry_msg::Pose are
+    // randomly evaluated from the move group forward kinematics and, thus, they are always valid. <eef_name> sets the
+    // link of reference for the generated poses.
+    std::vector<geometry_msgs::Pose> getRandomWaypointsVector(int n, std::string eef_name = "psm_tool_tip_link");
+
+    // --- computeGoalConstraint: given a <goal_pose>, a kinematic constraint for the trajectory goal is evaluated and
+    // it is returned from this function.
+    moveit_msgs::Constraints computeGoalConstraint(geometry_msgs::Pose goal_pose);
+
+    // --- convertJointTrajectoryCartesian(): this function converts the estimated trajectory in MoveItDVRKPlanning res
+    // into a vector of poses. This function is recommended if working with dVRK v1.x
+    std::vector<geometry_msgs::Pose> convertJointTrajectoryToCartesian ();
+
+    // --- convertJointTrajectoryCartesian(): this function converts the estimated trajectory in MoveItDVRKPlanning res
+    // into a vector of poses. This function is recommended if working with dVRK v1.x
+    std::vector<geometry_msgs::TransformStamped> convertJointTrajectoryToCartesianStamped();
+
+    // --- convertJointTrajectoryToJointState: this function converts the estimated trajectory in MoveItDVRKPlanning res
+    // into a vector of joint states. This function works with any version of dVRK as the topic for setting a joint
+    // trajectory remains the same from version 1.x to 2.x
+    std::vector<sensor_msgs::JointState> convertJointTrajectoryToJointState ();
+
+    // ---compileMotionPlanRequest: given a <goal_constraint> and a <trajecrtory> this function compiles the MoveIt!
+    // planning request. Within this function the STOMP planner is called to smooth the <trajectory> evaluated before as
+    // a computeCartesianPath().
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory);
+
+    // #############
+    // ### UTILS ###
+    // #############
+
+    // --- displayResultTrajectory: shows the trajectory on RViz. Requires the currently used <node_handle>.
     void displayResultTrajectory(ros::NodeHandle node_handle);
+
+    // --- displayWaypoints(): shows location of the defined waypoints
     void displayWaypoints();
+
+    // --- checkWaypointsValidity: this function checks the reachability of a vector of waypoints <wp_vector>. The
+    // final result and validity of the points is printed to screen.
     void checkWaypointsValidity(std::vector<geometry_msgs::Pose> wp_vector);
+
+    // --- checkPoseValidity: this function checks the reachability of a waypoint <wp_vector>. The final result and
+    // validity of the points is printed to screen.
     void checkPoseValidity(geometry_msgs::Pose);
 
 };

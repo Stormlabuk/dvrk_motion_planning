@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     MoveItDVRKPlanning mid("PSM1", 2);
 
     // ### SETUP PUBLISHERS FOR
-    mid.setupDVRKTrajectoryPublisher(node_handle);
+    mid.setupDVRKCartesianTrajectoryPublisher(node_handle);
 
     // ### LOAD PLANNER PLUGIN ###
     planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin(node_handle);
@@ -54,5 +54,7 @@ int main(int argc, char** argv) {
 
     // ### SHOW RESULT TRAJECTORY ###
     mid.displayResultTrajectory(node_handle);
+
+    while (ros::ok()){}
 }
 
