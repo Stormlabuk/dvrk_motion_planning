@@ -291,7 +291,7 @@ void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(ros::NodeHandle n
     std::stringstream topic_name;
 
     if (dvrk_version == 1){
-        topic_name << "/dvrk/" << arm_name << "/set_position_cartesian";
+        topic_name << "/dvrk/" << arm_name << "/set_position_goal_cartesian";
         cartesian_pub = node_handle.advertise<geometry_msgs::Pose>(topic_name.str(), 1000);}
 
     else if (dvrk_version==2){
@@ -299,6 +299,19 @@ void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(ros::NodeHandle n
         cartesian_pub = node_handle.advertise<geometry_msgs::TransformStamped>(topic_name.str(), 1000);}
     else{ROS_ERROR("Unknown dVRK version! DVRK version (MoveItDVRKPlanning.dvrk_version) can be either 1 or 2.");}
 
+}
+
+void MoveItDVRKPlanning::setupDVRKJointTrajectoryPublisher(ros::NodeHandle node_handle) {
+    std::stringstream topic_name;
+
+    if (dvrk_version == 1){
+        topic_name << "/dvrk/" << arm_name << "/set_position_goal_joint";
+        joint_pub = node_handle.advertise<sensor_msgs::JointState>(topic_name.str(), 1000);}
+
+    else if (dvrk_version==2){
+        topic_name << "/" << arm_name << "/setpoint_js";
+        joint_pub = node_handle.advertise<sensor_msgs::JointState>(topic_name.str(), 1000);}
+    else{ROS_ERROR("Unknown dVRK version! DVRK version (MoveItDVRKPlanning.dvrk_version) can be either 1 or 2.");}
 }
 
 std::vector<sensor_msgs::JointState> MoveItDVRKPlanning::convertJointTrajectoryToJointState (){

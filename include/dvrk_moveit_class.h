@@ -26,8 +26,10 @@
 
 class MoveItDVRKPlanning {
 
-
 public:
+    // #######################
+    // ### DVRK MOVE GROUP ###
+    // #######################
     int dvrk_version;                           // dvrk version, can be 1 or 2
     std::string move_group_name = "psm_arm";    // MoveIt move group name
     std::string arm_name;                       // Arm name, used to gather the dvrk ROS topics
@@ -41,7 +43,16 @@ public:
     const double eef_step = 0.001;              // max end effector step used during trajectory evaluation
     geometry_msgs::Pose home_pose;              // home pose for the robot
 
-    ros::Publisher cartesian_pub;
+    // #####################
+    // ### ROS PUBS/SUBS ###
+    // #####################
+
+    ros::Publisher cartesian_pub;               // cartesian trajectory publisher
+    ros::Publisher joint_pub;                   // joint trajectory publisher
+
+    // #####################
+    // ### MOVEIT! SETUP ###
+    // #####################
 
     moveit::planning_interface::MoveGroupInterface move_group = moveit::planning_interface::MoveGroupInterface(move_group_name);
     robot_model_loader::RobotModelLoader robot_model_loader = robot_model_loader::RobotModelLoader("robot_description");
@@ -57,15 +68,21 @@ public:
     // ### CONSTRUCTORS ###
     // ####################
 
-    MoveItDVRKPlanning(std::string arm, int version = 1);
+    explicit MoveItDVRKPlanning(std::string arm, int version = 1);
 
     // #######################
     // ### SETUP FUNCTIONS ###
     // #######################
 
     // --- setupDVRKCartesianTrajectoryPublisher: this function sets up the publisher to the right dVRK topic depending on
-    // the software version. Different dVRK versions publish on different topics and different messages.
+    // the software version. Different dVRK versions publish on different topics and different messages. The function
+    // defines and initiates the publisher for "cartesian_pub", thus requires a cartesian trajectory to be published.
     void setupDVRKCartesianTrajectoryPublisher(ros::NodeHandle node_handle);
+
+    // --- setupDVRKJointTrajectoryPublisher: this function sets up the publisher to the right dVRK topic depending on
+    // the software version. Different dVRK versions publish on different topics and different messages. The function
+    // defines and initiates the publisher for "joint_pub", thus requires a cartesian trajectory to be published.
+    void setupDVRKJointTrajectoryPublisher(ros::NodeHandle node_handle);
 
     // --- setupPlanningScene: planning scene is first cleared and than populated with the robot model.
     void setupPlanningScene();
