@@ -64,11 +64,13 @@ public:
     moveit_visual_tools::MoveItVisualTools visual_tools = moveit_visual_tools::MoveItVisualTools("world");
     moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
-    // ####################
-    // ### CONSTRUCTORS ###
-    // ####################
+    // ########################
+    // ### CON/DE-STRUCTORS ###
+    // ########################
 
     explicit MoveItDVRKPlanning(std::string arm, int version = 1);
+
+    ~MoveItDVRKPlanning();
 
     // #######################
     // ### SETUP FUNCTIONS ###

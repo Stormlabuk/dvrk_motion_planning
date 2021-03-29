@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 
     // ### EVALUATE CARTESIAN PATH TO SMOOTH WITH STOMP ###
     moveit_msgs::RobotTrajectory trajectory;
-    double fraction = mid.move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory);
+    double fraction = mid.move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory) * 100;
 
     // ### DEFINE GOAL POSE AND COMPILE MOTION PLAN REQUEST ###
     moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(2));
@@ -58,9 +58,9 @@ int main(int argc, char** argv) {
 
     // ### STOP SPINNER AND DEFINE NEW ROS SPINNER ###
     spinner.stop();
-    ros::Rate r(10);
+    ros::Rate r(50);
 
-    fraction = fraction * 100;
+//    fraction = fraction * 100;
 
     if(fraction > 95) {
         ROS_INFO("!!! Planning successful: %.03f percent of the trajectory is followed.", fraction);
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
 
         while (ros::ok()) {
             for (int i = 0; i < pose_trajectory.size(); i++) {
-                
+
                 mid.cartesian_pub.publish(pose_trajectory.at(i));
                 mid.joint_pub.publish(joint_trajectory.at(i));
 
@@ -77,8 +77,9 @@ int main(int argc, char** argv) {
             }
             break;
         }
-
         ROS_INFO("Trajectory published and executed. Shutting down node...");
     }
+
+    return 0;
 }
 

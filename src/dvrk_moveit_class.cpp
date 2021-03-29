@@ -5,7 +5,7 @@
 #include <geometry_msgs/Pose.h>
 #include "dvrk_moveit_class.h"
 #include <moveit/planning_interface/planning_interface.h>
-#include <pluginlib/class_loader.h>
+//#include <pluginlib/class_loader.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <boost/scoped_ptr.hpp>
 #include <moveit_visual_tools/moveit_visual_tools.h>
@@ -185,6 +185,8 @@ MoveItDVRKPlanning::MoveItDVRKPlanning(std::string arm, int version){
     home_pose.orientation.z = 0;
     home_pose.orientation.w = 0.7071068;
 }
+
+MoveItDVRKPlanning::~MoveItDVRKPlanning(){};
 
 void MoveItDVRKPlanning::setupPlanningScene() {
     visual_tools.loadRobotStatePub("/display_robot_state");
