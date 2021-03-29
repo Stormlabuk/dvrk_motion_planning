@@ -15,10 +15,11 @@ int main(int argc, char** argv) {
     spinner.start();
     ros::NodeHandle node_handle("~");
 
-    MoveItDVRKPlanning mid("PSM1", 2);
+    MoveItDVRKPlanning mid("PSM1", 1);
 
     // ### SETUP PUBLISHERS FOR
     mid.setupDVRKCartesianTrajectoryPublisher(node_handle);
+    mid.setupDVRKJointTrajectoryPublisher(node_handle);
 
     // ### LOAD PLANNER PLUGIN ###
     planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin(node_handle);
@@ -38,7 +39,7 @@ int main(int argc, char** argv) {
 
     // ### EVALUATE CARTESIAN PATH TO SMOOTH WITH STOMP ###
     moveit_msgs::RobotTrajectory trajectory;
-    mid.move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory);
+    double fraction = mid.move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory);
 
     // ### DEFINE GOAL POSE AND COMPILE MOTION PLAN REQUEST ###
     moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(2));
@@ -55,6 +56,29 @@ int main(int argc, char** argv) {
     // ### SHOW RESULT TRAJECTORY ###
     mid.displayResultTrajectory(node_handle);
 
-    while (ros::ok()){}
+    // ### STOP SPINNER AND DEFINE NEW ROS SPINNER ###
+    spinner.stop();
+    ros::Rate r(10);
+
+    fraction = fraction * 100;
+
+    if(fraction > 95) {
+        ROS_INFO("!!! Planning successful: %.03f percent of the trajectory is followed.", fraction);
+        ROS_INFO("Publishing trajectory of %d points", (int) pose_trajectory.size());
+
+        while (ros::ok()) {
+            for (int i = 0; i < pose_trajectory.size(); i++) {
+                
+                mid.cartesian_pub.publish(pose_trajectory.at(i));
+                mid.joint_pub.publish(joint_trajectory.at(i));
+
+                ros::spinOnce();
+                r.sleep();
+            }
+            break;
+        }
+
+        ROS_INFO("Trajectory published and executed. Shutting down node...");
+    }
 }
 
