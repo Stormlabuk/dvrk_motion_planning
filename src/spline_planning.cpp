@@ -13,22 +13,39 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "spline_planning");
     ros::AsyncSpinner spinner(1);
     spinner.start();
-    ros::NodeHandle node_handle("~");
 
     MoveItDVRKPlanning mid("PSM1", 1);
 
     // ### SETUP PUBLISHERS FOR
-    mid.setupDVRKCartesianTrajectoryPublisher(node_handle);
-    mid.setupDVRKJointTrajectoryPublisher(node_handle);
+    mid.setupDVRKCartesianTrajectoryPublisher();
+    mid.setupDVRKJointTrajectoryPublisher();
+    mid.setupDVRKSubsribers();
 
     // ### LOAD PLANNER PLUGIN ###
-    planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin(node_handle);
+    planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin();
 
     // ### SETUP PLANNING SCENE ###
     mid.setupPlanningScene();
 
     // ### DEFINE AND VALIDATE WAYPOINTS ###
     mid.waypoints = mid.getWaypointsVector('B');
+//    mid.move_group.setPoseReferenceFrame("psm_tool_tip_link");
+    ROS_INFO_STREAM("Planning using as reference frame: " << mid.move_group.getPoseReferenceFrame());
+
+//    geometry_msgs::Pose wp1;
+//    wp1.position.x = -0.02;
+//    wp1.position.y = -0.01;
+//    wp1.position.z = 0.02;
+//    wp1.orientation = mid.home_pose.orientation;
+//
+//    geometry_msgs::Pose wp2;
+//    wp2.position.x = 0;
+//    wp2.position.y = 0;
+//    wp2.position.z = 0.06;
+//
+//    mid.waypoints.push_back(wp1);
+//    mid.waypoints.push_back(wp2);
+
     mid.checkPoseValidity(mid.home_pose);
     mid.checkWaypointsValidity(mid.waypoints);
 
@@ -42,7 +59,7 @@ int main(int argc, char** argv) {
     double fraction = mid.move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory) * 100;
 
     // ### DEFINE GOAL POSE AND COMPILE MOTION PLAN REQUEST ###
-    moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(2));
+    moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(mid.waypoints.size()-1));
     mid.compileMotionPlanRequest(pose_goal_end, trajectory);
 
     // SOLVE REQUEST
@@ -54,7 +71,7 @@ int main(int argc, char** argv) {
     std::vector<geometry_msgs::Pose> pose_trajectory = mid.convertJointTrajectoryToCartesian();
 
     // ### SHOW RESULT TRAJECTORY ###
-    mid.displayResultTrajectory(node_handle);
+    mid.displayResultTrajectory();
 
     // ### STOP SPINNER AND DEFINE NEW ROS SPINNER ###
     spinner.stop();
