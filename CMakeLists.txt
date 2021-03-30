@@ -50,3 +50,6 @@ target_link_libraries(spline_planning ${catkin_LIBRARIES})
 
 add_executable(full_planning src/full_planning.cpp src/dvrk_moveit_class.cpp)
 target_link_libraries(full_planning ${catkin_LIBRARIES})
+
+add_executable(dvrk_planexe src/dvrk_planexe.cpp src/dvrk_moveit_class.cpp)
+target_link_libraries(dvrk_planexe ${catkin_LIBRARIES})
