@@ -42,13 +42,19 @@ public:
     const double jump_threshold = 0.0;
     const double eef_step = 0.001;              // max end effector step used during trajectory evaluation
     geometry_msgs::Pose home_pose;              // home pose for the robot
+    geometry_msgs::PoseStamped  cart_pose;      // current cartesian dVRK pose (API v1.x)
+    geometry_msgs::TransformStamped cart2_pose; // current cartesian dVRK pose (API v2.x)
+    sensor_msgs::JointState joint_pose;         // current joint dVRK pose
 
     // #####################
     // ### ROS PUBS/SUBS ###
     // #####################
 
+    ros::NodeHandle node_handle;
     ros::Publisher cartesian_pub;               // cartesian trajectory publisher
     ros::Publisher joint_pub;                   // joint trajectory publisher
+    ros::Subscriber cp_sub;                     // DVRK arm cartesian position subscriber
+    ros::Subscriber js_sub;                     // DVRK arm joint state subscriber
 
     // #####################
     // ### MOVEIT! SETUP ###
@@ -61,7 +67,7 @@ public:
     const robot_state::JointModelGroup* joint_model_group = robot_state->getJointModelGroup(move_group_name);
     robot_state::RobotState start_state = robot_state::RobotState(*move_group.getCurrentState()); // initial state of the robot
     planning_scene::PlanningScenePtr planning_scene = std::make_shared<planning_scene::PlanningScene>(robot_model);
-    moveit_visual_tools::MoveItVisualTools visual_tools = moveit_visual_tools::MoveItVisualTools("world");
+    moveit_visual_tools::MoveItVisualTools visual_tools = moveit_visual_tools::MoveItVisualTools("psm_tool_tip_link");
     moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
     // ########################
@@ -76,22 +82,39 @@ public:
     // ### SETUP FUNCTIONS ###
     // #######################
 
+
+    // --- cp_callback: callback function for cartesian point position of the arm. The PoseStamped msg is copied to the
+    // <cart_pose> class attribute. Works only with dVRK API v1.x
+    void cp_callback(const geometry_msgs::PoseStamped msg);
+
+    // --- cp_callback: callback function for cartesian point position of the arm. The PoseStamped msg is copied to the
+    // <cart_pose> class attribute. Works only with dVRK API v2.x
+    void cp2_callback(const geometry_msgs::TransformStamped msg);
+
+    // --- cp_callback: callback function for joint state of the arm. The PoseStamped msg is copied to the <joint_pose>
+    // class attribute. Works for both versions of dVRK API v1.x and v2.x.
+    void js_callback(const sensor_msgs::JointState msg);
+
     // --- setupDVRKCartesianTrajectoryPublisher: this function sets up the publisher to the right dVRK topic depending on
     // the software version. Different dVRK versions publish on different topics and different messages. The function
     // defines and initiates the publisher for "cartesian_pub", thus requires a cartesian trajectory to be published.
-    void setupDVRKCartesianTrajectoryPublisher(ros::NodeHandle node_handle);
+    void setupDVRKCartesianTrajectoryPublisher();
 
     // --- setupDVRKJointTrajectoryPublisher: this function sets up the publisher to the right dVRK topic depending on
     // the software version. Different dVRK versions publish on different topics and different messages. The function
     // defines and initiates the publisher for "joint_pub", thus requires a cartesian trajectory to be published.
-    void setupDVRKJointTrajectoryPublisher(ros::NodeHandle node_handle);
+    void setupDVRKJointTrajectoryPublisher();
+
+    void setupDVRKSubsribers();
+
+
 
     // --- setupPlanningScene: planning scene is first cleared and than populated with the robot model.
     void setupPlanningScene();
 
     // --- loadPlannerPlugin: class loader is used to load the planning plugin. In this specific case the planner used
     // is STOMP (https://ros-planning.github.io/moveit_tutorials/doc/stomp_planner/stomp_planner_tutorial.html)
-    planning_interface::PlannerManagerPtr loadPlannerPlugin(ros::NodeHandle node_handle);
+    planning_interface::PlannerManagerPtr loadPlannerPlugin();
 
     // ############################
     // ### TRAJECTORY FUNCTIONS ###
@@ -133,7 +156,7 @@ public:
     // #############
 
     // --- displayResultTrajectory: shows the trajectory on RViz. Requires the currently used <node_handle>.
-    void displayResultTrajectory(ros::NodeHandle node_handle);
+    void displayResultTrajectory();
 
     // --- displayWaypoints(): shows location of the defined waypoints
     void displayWaypoints();
