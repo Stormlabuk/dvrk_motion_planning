@@ -129,7 +129,7 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getRandomWaypointsVector(in
     return waypoints;
 }
 
-planning_interface::PlannerManagerPtr MoveItDVRKPlanning::loadPlannerPlugin(ros::NodeHandle node_handle) {
+planning_interface::PlannerManagerPtr MoveItDVRKPlanning::loadPlannerPlugin() {
     boost::scoped_ptr<pluginlib::ClassLoader<planning_interface::PlannerManager>> planner_plugin_loader;
     planning_interface::PlannerManagerPtr planner_instance;
     std::string planner_plugin_name;
@@ -184,9 +184,10 @@ MoveItDVRKPlanning::MoveItDVRKPlanning(std::string arm, int version){
     home_pose.orientation.y = 0;
     home_pose.orientation.z = 0;
     home_pose.orientation.w = 0.7071068;
+
 }
 
-MoveItDVRKPlanning::~MoveItDVRKPlanning(){};
+MoveItDVRKPlanning::~MoveItDVRKPlanning()= default;
 
 void MoveItDVRKPlanning::setupPlanningScene() {
     visual_tools.loadRobotStatePub("/display_robot_state");
@@ -288,7 +289,19 @@ std::vector<geometry_msgs::TransformStamped> MoveItDVRKPlanning::convertJointTra
         return pose_trajectory;}
 }
 
-void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(ros::NodeHandle node_handle){
+void MoveItDVRKPlanning::cp_callback(const geometry_msgs::PoseStamped msg){
+    cart_pose = msg;
+}
+
+void MoveItDVRKPlanning::cp2_callback(const geometry_msgs::TransformStamped msg){
+    cart2_pose = msg;
+}
+
+void MoveItDVRKPlanning::js_callback(const sensor_msgs::JointState msg){
+    joint_pose = msg;
+}
+
+void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(){
 
     std::stringstream topic_name;
 
@@ -303,7 +316,29 @@ void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(ros::NodeHandle n
 
 }
 
-void MoveItDVRKPlanning::setupDVRKJointTrajectoryPublisher(ros::NodeHandle node_handle) {
+void MoveItDVRKPlanning::setupDVRKSubsribers(){
+
+    std::stringstream topic_name;
+
+    if (dvrk_version == 1) {
+        topic_name << "/dvrk/" << arm_name << "/position_cartesian_current";
+        cp_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::cp_callback,this);
+        topic_name.clear();
+        topic_name << "/dvrk/" << arm_name << "/position_joint_current";
+        js_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::js_callback, this);
+    }
+
+    else if(dvrk_version==2){
+        topic_name << "/" << arm_name << "/measured_cp";
+        cp_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::cp2_callback,this);
+        topic_name.clear();
+        topic_name << "/" << arm_name << "/measured_js";
+        js_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::js_callback, this);
+    }
+    else{ROS_ERROR("Unknown dVRK version! DVRK version (MoveItDVRKPlanning.dvrk_version) can be either 1 or 2.");}
+}
+
+void MoveItDVRKPlanning::setupDVRKJointTrajectoryPublisher() {
     std::stringstream topic_name;
 
     if (dvrk_version == 1){
@@ -346,7 +381,7 @@ void MoveItDVRKPlanning::compileMotionPlanRequest(moveit_msgs::Constraints goal_
 
 }
 
-void MoveItDVRKPlanning::displayResultTrajectory(ros::NodeHandle node_handle){
+void MoveItDVRKPlanning::displayResultTrajectory(){
     ros::Publisher display_publisher =
             node_handle.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
     moveit_msgs::DisplayTrajectory display_trajectory;
