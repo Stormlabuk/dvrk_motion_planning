@@ -67,7 +67,7 @@ public:
     const robot_state::JointModelGroup* joint_model_group = robot_state->getJointModelGroup(move_group_name);
     robot_state::RobotState start_state = robot_state::RobotState(*move_group.getCurrentState()); // initial state of the robot
     planning_scene::PlanningScenePtr planning_scene = std::make_shared<planning_scene::PlanningScene>(robot_model);
-    moveit_visual_tools::MoveItVisualTools visual_tools = moveit_visual_tools::MoveItVisualTools("psm_tool_tip_link");
+    moveit_visual_tools::MoveItVisualTools visual_tools = moveit_visual_tools::MoveItVisualTools("world");
     moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
     // ########################
@@ -105,11 +105,13 @@ public:
     // defines and initiates the publisher for "joint_pub", thus requires a cartesian trajectory to be published.
     void setupDVRKJointTrajectoryPublisher();
 
+    // --- setupDVRKSubscribers(): this function setups the subscriber to get the values of the PSM arm. This information
+    // is then going to be used later to define the initial state of the robot, setting it to be the initial pose of the
+    // planned trajectory.
     void setupDVRKSubsribers();
 
-
-
-    // --- setupPlanningScene: planning scene is first cleared and than populated with the robot model.
+    // --- setupPlanningScene: planning scene is first cleared and than populated with the robot model. This function
+    // automatically removes the
     void setupPlanningScene();
 
     // --- loadPlannerPlugin: class loader is used to load the planning plugin. In this specific case the planner used
@@ -146,7 +148,7 @@ public:
     // trajectory remains the same from version 1.x to 2.x
     std::vector<sensor_msgs::JointState> convertJointTrajectoryToJointState ();
 
-    // ---compileMotionPlanRequest: given a <goal_constraint> and a <trajecrtory> this function compiles the MoveIt!
+    // ---compileMotionPlanRequest: given a <goal_constraint> and a <trajectory> this function compiles the MoveIt!
     // planning request. Within this function the STOMP planner is called to smooth the <trajectory> evaluated before as
     // a computeCartesianPath().
     void compileMotionPlanRequest(moveit_msgs::Constraints goal_constraint, moveit_msgs::RobotTrajectory trajectory);

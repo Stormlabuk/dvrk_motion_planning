@@ -77,8 +77,6 @@ int main(int argc, char** argv) {
     spinner.stop();
     ros::Rate r(50);
 
-//    fraction = fraction * 100;
-
     if(fraction > 95) {
         ROS_INFO("!!! Planning successful: %.03f percent of the trajectory is followed.", fraction);
         ROS_INFO("Publishing trajectory of %d points", (int) pose_trajectory.size());

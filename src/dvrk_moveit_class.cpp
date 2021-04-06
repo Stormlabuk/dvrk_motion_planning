@@ -91,12 +91,12 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::getWaypointsVector(char tra
 
     if (traj_ID == 'W'){
         tpose_1.position.x = 0.07;
-        tpose_1.position.y = 0.03;
+        tpose_1.position.y = 0.05;
         tpose_1.position.z = -0.05;
         tpose_1.orientation = home_pose.orientation;
 
-        tpose_2.position.x = -0.07;
-        tpose_2.position.y = 0.03;
+        tpose_2.position.x = -0.02;
+        tpose_2.position.y = 0.05;
         tpose_2.position.z = -0.05;
         tpose_2.orientation = home_pose.orientation;
     }
@@ -184,7 +184,6 @@ MoveItDVRKPlanning::MoveItDVRKPlanning(std::string arm, int version){
     home_pose.orientation.y = 0;
     home_pose.orientation.z = 0;
     home_pose.orientation.w = 0.7071068;
-
 }
 
 MoveItDVRKPlanning::~MoveItDVRKPlanning()= default;
