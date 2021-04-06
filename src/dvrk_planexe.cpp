@@ -13,29 +13,44 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "spline_planning");
     ros::AsyncSpinner spinner(1);
     spinner.start();
-    ros::NodeHandle node_handle("~");
 
     MoveItDVRKPlanning mid("PSM1", 1);
 
-    
-
     // ### SETUP PUBLISHERS FOR
-    mid.setupDVRKCartesianTrajectoryPublisher(node_handle);
-    mid.setupDVRKJointTrajectoryPublisher(node_handle);
+    mid.setupDVRKCartesianTrajectoryPublisher();
+    mid.setupDVRKJointTrajectoryPublisher();
+    mid.setupDVRKSubsribers();
 
     // ### LOAD PLANNER PLUGIN ###
-    planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin(node_handle);
+    planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin();
 
     // ### SETUP PLANNING SCENE ###
     mid.setupPlanningScene();
 
     // ### DEFINE AND VALIDATE WAYPOINTS ###
     mid.waypoints = mid.getWaypointsVector('B');
+//    mid.move_group.setPoseReferenceFrame("psm_tool_tip_link");
+    ROS_INFO_STREAM("Planning using as reference frame: " << mid.move_group.getPoseReferenceFrame());
+
+//    geometry_msgs::Pose wp1;
+//    wp1.position.x = -0.02;
+//    wp1.position.y = -0.01;
+//    wp1.position.z = 0.02;
+//    wp1.orientation = mid.home_pose.orientation;
+//
+//    geometry_msgs::Pose wp2;
+//    wp2.position.x = 0;
+//    wp2.position.y = 0;
+//    wp2.position.z = 0.06;
+//
+//    mid.waypoints.push_back(wp1);
+//    mid.waypoints.push_back(wp2);
+
     mid.checkPoseValidity(mid.home_pose);
     mid.checkWaypointsValidity(mid.waypoints);
 
     // SETUP INITIAL STATE
-    mid.start_state.setFromIK(mid.joint_model_group, mid.home_pose); // set start state as home_pose
+    mid.start_state.setFromIK(mid.joint_model_group, mid.cart_pose.pose); // set start state as home_pose
     mid.move_group.setStartState(mid.start_state);
     mid.move_group.setMaxVelocityScalingFactor(mid.max_vel_scaling_factor);
 
@@ -44,7 +59,7 @@ int main(int argc, char** argv) {
     double fraction = mid.move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory) * 100;
 
     // ### DEFINE GOAL POSE AND COMPILE MOTION PLAN REQUEST ###
-    moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(2));
+    moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(mid.waypoints.size()-1));
     mid.compileMotionPlanRequest(pose_goal_end, trajectory);
 
     // SOLVE REQUEST
@@ -54,15 +69,14 @@ int main(int argc, char** argv) {
 
     std::vector<sensor_msgs::JointState> joint_trajectory = mid.convertJointTrajectoryToJointState();
     std::vector<geometry_msgs::Pose> pose_trajectory = mid.convertJointTrajectoryToCartesian();
+    std::vector<geometry_msgs::Pose> pose_trajectory_trans = mid.transformTrajectory(pose_trajectory, mid.base_frame);
 
     // ### SHOW RESULT TRAJECTORY ###
-    mid.displayResultTrajectory(node_handle);
+    mid.displayResultTrajectory();
 
     // ### STOP SPINNER AND DEFINE NEW ROS SPINNER ###
     spinner.stop();
     ros::Rate r(50);
-
-//    fraction = fraction * 100;
 
     if(fraction > 95) {
         ROS_INFO("!!! Planning successful: %.03f percent of the trajectory is followed.", fraction);
@@ -80,6 +94,9 @@ int main(int argc, char** argv) {
             break;
         }
         ROS_INFO("Trajectory published and executed. Shutting down node...");
+    }
+    else{
+        ROS_ERROR("Trajectory is not feasible: %.03f of points are not reachable", 100-fraction);
     }
 
     return 0;
