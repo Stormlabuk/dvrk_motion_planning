@@ -300,6 +300,10 @@ void MoveItDVRKPlanning::js_callback(const sensor_msgs::JointState msg){
     joint_pose = msg;
 }
 
+void MoveItDVRKPlanning::bf_callback(const geometry_msgs::Pose msg){
+    base_frame = msg;
+}
+
 void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(){
 
     std::stringstream topic_name;
@@ -318,6 +322,9 @@ void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(){
 void MoveItDVRKPlanning::setupDVRKSubsribers(){
 
     std::stringstream topic_name;
+    topic_name << "/dvrk" << arm_name << "/get_base_frame";
+    bf_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::bf_callback, this);
+    topic_name.clear();
 
     if (dvrk_version == 1) {
         topic_name << "/dvrk/" << arm_name << "/position_cartesian_current";
