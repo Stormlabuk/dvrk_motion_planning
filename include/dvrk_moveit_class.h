@@ -45,7 +45,7 @@ public:
     geometry_msgs::PoseStamped  cart_pose;      // current cartesian dVRK pose (API v1.x)
     geometry_msgs::TransformStamped cart2_pose; // current cartesian dVRK pose (API v2.x)
     sensor_msgs::JointState joint_pose;         // current joint dVRK pose
-
+    geometry_msgs::Pose base_frame;             // Current set base frame
     // #####################
     // ### ROS PUBS/SUBS ###
     // #####################
@@ -55,6 +55,7 @@ public:
     ros::Publisher joint_pub;                   // joint trajectory publisher
     ros::Subscriber cp_sub;                     // DVRK arm cartesian position subscriber
     ros::Subscriber js_sub;                     // DVRK arm joint state subscriber
+    ros::Subscriber bf_sub;                     // Base frame subscriber
 
     // #####################
     // ### MOVEIT! SETUP ###
@@ -94,6 +95,10 @@ public:
     // --- cp_callback: callback function for joint state of the arm. The PoseStamped msg is copied to the <joint_pose>
     // class attribute. Works for both versions of dVRK API v1.x and v2.x.
     void js_callback(const sensor_msgs::JointState msg);
+
+    // --- bf_callback: callback function for base frame of the arm. The base frame is set externally and can be read
+    // from the topic /dvrk/<arm_name>/get_base_frame.
+    void bf_callback(const geometry_msgs::Pose msg);
 
     // --- setupDVRKCartesianTrajectoryPublisher: this function sets up the publisher to the right dVRK topic depending on
     // the software version. Different dVRK versions publish on different topics and different messages. The function
@@ -171,6 +176,16 @@ public:
     // validity of the points is printed to screen.
     void checkPoseValidity(geometry_msgs::Pose);
 
+    // --- convertPoseToMatrix: given a geometry_msgs::Pose this function returns his conversion to homogeneous matrix.
+    static Eigen::Matrix4d convertPoseToMatrix(geometry_msgs::Pose pose);
+
+    // --- convertMatrixToPose: given a homogenous matrix represented as Eigen::Matrix4d this function returns the
+    // respective geometry_msgs::Pose
+    static geometry_msgs::Pose convertMatrixToPose(Eigen::Matrix4d mat);
+
+    // --- transformTrajectory: given a vector of geometry_msgs::Pose elements, and a base_frame, all the poses of the
+    // trajectory are going to be trasformed referring to base_frame.
+    static std::vector<geometry_msgs::Pose> transformTrajectory(std::vector<geometry_msgs::Pose> traj, geometry_msgs::Pose base_frame);
 };
 
 

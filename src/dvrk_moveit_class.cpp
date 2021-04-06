@@ -4,6 +4,7 @@
 #include <string.h>
 #include <geometry_msgs/Pose.h>
 #include "dvrk_moveit_class.h"
+#include <tf2_ros/buffer.h>
 #include <moveit/planning_interface/planning_interface.h>
 //#include <pluginlib/class_loader.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
@@ -444,3 +445,61 @@ void MoveItDVRKPlanning::checkPoseValidity(geometry_msgs::Pose pose){
 
 }
 
+Eigen::Matrix4d MoveItDVRKPlanning::convertPoseToMatrix(geometry_msgs::Pose pose){
+
+    Eigen::Matrix4d res;
+    Eigen::Vector4d V;
+    V(0) = 0;
+    V(1) = 0;
+    V(2) = 0;
+    V(3) = 1;
+    Eigen::MatrixXd RT(3,4);
+
+    Eigen::Vector3d T(pose.position.x, pose.position.y, pose.position.z);
+    Eigen::Quaterniond q(pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
+
+    Eigen::Matrix3d R = q.toRotationMatrix();
+
+    RT << R,T;
+    res.block(0,0,3,4) = RT;
+    res.row(3) = V;
+
+    return res;
+}
+
+geometry_msgs::Pose MoveItDVRKPlanning::convertMatrixToPose (Eigen::Matrix4d mat){
+    geometry_msgs::Pose res;
+
+    res.position.x = mat(0,3);
+    res.position.y = mat(1,3);
+    res.position.z = mat(2,3);
+
+    Eigen::Matrix3d rot_mat;
+    rot_mat = mat.block(0,0,3,3);
+    Eigen::Quaterniond quat_rot(rot_mat);
+
+    res.orientation.w = quat_rot.w();
+    res.orientation.x = quat_rot.x();
+    res.orientation.y = quat_rot.y();
+    res.orientation.z = quat_rot.z();
+
+    return res;
+}
+
+std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::transformTrajectory(std::vector<geometry_msgs::Pose> traj, geometry_msgs::Pose base_frame){
+    std::vector<geometry_msgs::Pose> res;
+    geometry_msgs::PoseStamped trans;
+
+    for(int i = 0; i < traj.size(); i++) {
+        Eigen::Matrix4d pos_mat = convertPoseToMatrix(traj[i]);
+        Eigen::Matrix4d bf_mat = convertPoseToMatrix(base_frame);
+
+        Eigen::Matrix4d trans_mat = pos_mat * bf_mat;
+
+        geometry_msgs::Pose trans_pose = convertMatrixToPose(trans_mat);
+
+        res.push_back(trans_pose);
+    }
+
+    return  res;
+}
