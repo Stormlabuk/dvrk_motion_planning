@@ -293,6 +293,10 @@ void MoveItDVRKPlanning::cp_callback(const geometry_msgs::PoseStamped msg){
     cart_pose = msg;
 }
 
+void MoveItDVRKPlanning::cpl_callback(const geometry_msgs::PoseStamped msg){
+    cart_local_pose = msg;
+}
+
 void MoveItDVRKPlanning::cp2_callback(const geometry_msgs::TransformStamped msg){
     cart2_pose = msg;
 }
@@ -333,6 +337,10 @@ void MoveItDVRKPlanning::setupDVRKSubsribers(){
         topic_name << "/dvrk/" << arm_name << "/position_cartesian_current";
         std::cout << topic_name.str() << std::endl;
         cp_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::cp_callback,this);
+        topic_name.str("");
+        topic_name << "/dvrk/" << arm_name << "/position_cartesian_local_current";
+        std::cout << topic_name.str() << std::endl;
+        cpl_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::cpl_callback,this);
         topic_name.str("");
         topic_name << "/dvrk/" << arm_name << "/position_joint_current";
         js_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::js_callback, this);
@@ -437,6 +445,24 @@ void MoveItDVRKPlanning::checkWaypointsValidity(std::vector<geometry_msgs::Pose>
         } else{ ROS_ERROR("!!! Waypoints #%d: INVALID",i);}
     }
 
+}
+
+Eigen::Matrix4d MoveItDVRKPlanning::invertHomoMatrix (Eigen::Matrix4d mat){
+
+    Eigen::Matrix4d tf_inv;
+    Eigen::Vector4d tf_pos;
+
+    tf_pos = -1 * mat.col(3);
+    tf_inv.block(0,0,3,3) = mat.block(0,0,3,3).transpose();
+    tf_inv(3,3) = 1;
+    // tf_inv.col(3) = tf_inv.block(0,0,3,3) * mat.block(0,3,3,1);
+    tf_inv.col(3) = tf_inv * tf_pos;
+
+    std::cout << "Input Matrix: \n" << mat << std::endl;
+    std::cout << "tf_pose Matrix: \n" << tf_pos << std::endl;
+    std::cout << "tf_inv Matrix: \n" << tf_inv << std::endl;
+
+    return tf_inv;
 }
 
 void MoveItDVRKPlanning::checkPoseValidity(geometry_msgs::Pose pose){

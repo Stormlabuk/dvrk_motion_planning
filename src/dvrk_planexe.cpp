@@ -1,12 +1,18 @@
 #include <ros/ros.h>
 #include <dvrk_moveit_class.h>
 #include <string.h>
+#include <time.h>
 
 // MoveIt!
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/kinematic_constraints/utils.h>
 #include <moveit_msgs/DisplayTrajectory.h>
 
+//geometry_msgs::PoseStamped cart;
+//
+//void cp_callback(const geometry_msgs::PoseStamped msg){
+//    cart = msg;
+//}
 
 int main(int argc, char** argv) {
 
@@ -16,10 +22,12 @@ int main(int argc, char** argv) {
 
     MoveItDVRKPlanning mid("PSM1", 1);
 
-    // ### SETUP PUBLISHERS FOR
+    // ### SETUP PUBLISHERS ###
     mid.setupDVRKCartesianTrajectoryPublisher();
     mid.setupDVRKJointTrajectoryPublisher();
     mid.setupDVRKSubsribers();
+
+    while (mid.cart_pose.pose.position.x == 0){ROS_INFO("Waiting...");}
 
     // ### LOAD PLANNER PLUGIN ###
     planning_interface::PlannerManagerPtr planner_instance = mid.loadPlannerPlugin();
@@ -46,11 +54,35 @@ int main(int argc, char** argv) {
 //    mid.waypoints.push_back(wp1);
 //    mid.waypoints.push_back(wp2);
 
-    mid.checkPoseValidity(mid.home_pose);
-    mid.checkWaypointsValidity(mid.waypoints);
+    mid.checkPoseValidity(mid.cart_local_pose.pose);
+    geometry_msgs::Pose tpose_1;
+    geometry_msgs::Pose tpose_2;
+
+    tpose_1.position.x = 0.0;
+    tpose_1.position.y = 0.0;
+    tpose_1.position.z = 0.04;
+    tpose_1.orientation = mid.cart_pose.pose.orientation;
+//    tpose_1.orientation = mid.cart_local_pose.pose.orientation;
+
+    tpose_2.position.x = 0.0;
+    tpose_2.position.y = 0.0;
+    tpose_2.position.z = 0.06;
+    tpose_2.orientation = mid.cart_pose.pose.orientation;
+
+    std::vector<geometry_msgs::Pose> waypoints_;
+    waypoints_.push_back(tpose_1);
+    waypoints_.push_back(tpose_2);
+
+    geometry_msgs::Pose inv_pose = MoveItDVRKPlanning::convertMatrixToPose(MoveItDVRKPlanning::invertHomoMatrix(mid.convertPoseToMatrix(mid.base_frame)));
+    std::vector<geometry_msgs::Pose> waypoints_t = mid.transformTrajectory(waypoints_, inv_pose);
+
+    std::cout << waypoints_t.at(0) << std::endl;
+    std::cout << waypoints_t.at(1) << std::endl;
+
+    mid.checkWaypointsValidity(waypoints_t);
 
     // SETUP INITIAL STATE
-    mid.start_state.setFromIK(mid.joint_model_group, mid.cart_pose.pose); // set start state as home_pose
+    mid.start_state.setFromIK(mid.joint_model_group, mid.cart_local_pose.pose); // set start state as home_pose
     mid.move_group.setStartState(mid.start_state);
     mid.move_group.setMaxVelocityScalingFactor(mid.max_vel_scaling_factor);
 
@@ -75,8 +107,8 @@ int main(int argc, char** argv) {
     mid.displayResultTrajectory();
 
     // ### STOP SPINNER AND DEFINE NEW ROS SPINNER ###
-    spinner.stop();
-    ros::Rate r(50);
+//    spinner.stop();
+//    ros::Rate r(20);
 
     if(fraction > 95) {
         ROS_INFO("!!! Planning successful: %.03f percent of the trajectory is followed.", fraction);
@@ -85,11 +117,11 @@ int main(int argc, char** argv) {
         while (ros::ok()) {
             for (int i = 0; i < pose_trajectory.size(); i++) {
 
-                mid.cartesian_pub.publish(pose_trajectory.at(i));
-                mid.joint_pub.publish(joint_trajectory.at(i));
+//                mid.cartesian_pub.publish(pose_trajectory.at(i));
+                // mid.joint_pub.publish(joint_trajectory.at(i));
 
                 ros::spinOnce();
-                r.sleep();
+//                r.sleep();
             }
             break;
         }

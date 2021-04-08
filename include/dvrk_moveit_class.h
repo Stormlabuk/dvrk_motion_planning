@@ -43,6 +43,7 @@ public:
     const double eef_step = 0.001;              // max end effector step used during trajectory evaluation
     geometry_msgs::Pose home_pose;              // home pose for the robot
     geometry_msgs::PoseStamped  cart_pose;      // current cartesian dVRK pose (API v1.x)
+    geometry_msgs::PoseStamped cart_local_pose; // current local cartesian dVRK pose (API v1.x)
     geometry_msgs::TransformStamped cart2_pose; // current cartesian dVRK pose (API v2.x)
     sensor_msgs::JointState joint_pose;         // current joint dVRK pose
     geometry_msgs::Pose base_frame;             // Current set base frame
@@ -54,6 +55,7 @@ public:
     ros::Publisher cartesian_pub;               // cartesian trajectory publisher
     ros::Publisher joint_pub;                   // joint trajectory publisher
     ros::Subscriber cp_sub;                     // DVRK arm cartesian position subscriber
+    ros::Subscriber cpl_sub;
     ros::Subscriber js_sub;                     // DVRK arm joint state subscriber
     ros::Subscriber bf_sub;                     // Base frame subscriber
 
@@ -186,6 +188,10 @@ public:
     // --- transformTrajectory: given a vector of geometry_msgs::Pose elements, and a base_frame, all the poses of the
     // trajectory are going to be trasformed referring to base_frame.
     static std::vector<geometry_msgs::Pose> transformTrajectory(std::vector<geometry_msgs::Pose> traj, geometry_msgs::Pose base_frame);
+
+    void cpl_callback(const geometry_msgs::PoseStamped msg);
+
+    static Eigen::Matrix4d invertHomoMatrix(Eigen::Matrix4d mat);
 };
 
 
