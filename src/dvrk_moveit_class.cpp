@@ -309,10 +309,11 @@ void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(){
 
     std::stringstream topic_name;
 
-    if (dvrk_version == 1){
+    if (dvrk_version == 1) {
         topic_name << "/dvrk/" << arm_name << "/set_position_goal_cartesian";
-        cartesian_pub = node_handle.advertise<geometry_msgs::Pose>(topic_name.str(), 1000);}
-
+        cartesian_pub = node_handle.advertise<geometry_msgs::Pose>(topic_name.str(), 1000);
+        topic_name.str("");
+    }
     else if (dvrk_version==2){
         topic_name << "/" << arm_name << "/setpoint_cp";
         cartesian_pub = node_handle.advertise<geometry_msgs::TransformStamped>(topic_name.str(), 1000);}
@@ -323,14 +324,16 @@ void MoveItDVRKPlanning::setupDVRKCartesianTrajectoryPublisher(){
 void MoveItDVRKPlanning::setupDVRKSubsribers(){
 
     std::stringstream topic_name;
-    topic_name << "/dvrk" << arm_name << "/get_base_frame";
+    topic_name << "/dvrk/" << arm_name << "/get_base_frame";
     bf_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::bf_callback, this);
-    topic_name.clear();
+    std::cout << topic_name.str() << std::endl;
+    topic_name.str("");
 
     if (dvrk_version == 1) {
         topic_name << "/dvrk/" << arm_name << "/position_cartesian_current";
+        std::cout << topic_name.str() << std::endl;
         cp_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::cp_callback,this);
-        topic_name.clear();
+        topic_name.str("");
         topic_name << "/dvrk/" << arm_name << "/position_joint_current";
         js_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::js_callback, this);
     }
@@ -338,11 +341,12 @@ void MoveItDVRKPlanning::setupDVRKSubsribers(){
     else if(dvrk_version==2){
         topic_name << "/" << arm_name << "/measured_cp";
         cp_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::cp2_callback,this);
-        topic_name.clear();
+        topic_name.str("");
         topic_name << "/" << arm_name << "/measured_js";
         js_sub = node_handle.subscribe(topic_name.str(), 1000, &MoveItDVRKPlanning::js_callback, this);
     }
-    else{ROS_ERROR("Unknown dVRK version! DVRK version (MoveItDVRKPlanning.dvrk_version) can be either 1 or 2.");}
+    else{ROS_ERROR("Unknown dVRK version! DVRK version (MoveItDVRKPlanning.dvrk_version) can be either 1 or 2.");
+    }
 }
 
 void MoveItDVRKPlanning::setupDVRKJointTrajectoryPublisher() {
