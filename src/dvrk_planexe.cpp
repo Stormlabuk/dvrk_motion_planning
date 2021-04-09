@@ -2,6 +2,8 @@
 #include <dvrk_moveit_class.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+// #include <ncurses.h>
 
 // MoveIt!
 #include <moveit/planning_interface/planning_interface.h>
@@ -58,15 +60,19 @@ int main(int argc, char** argv) {
     geometry_msgs::Pose tpose_1;
     geometry_msgs::Pose tpose_2;
 
-    tpose_1.position.x = 0.0;
-    tpose_1.position.y = 0.0;
-    tpose_1.position.z = 0.04;
+//    tpose_1.position.x = 0.0;
+//    tpose_1.position.y = 0.0;
+//    tpose_1.position.z = 0.09;
+    tpose_1.position = mid.cart_pose.pose.position;
+    tpose_1.position.z += 0.02;
     tpose_1.orientation = mid.cart_pose.pose.orientation;
 //    tpose_1.orientation = mid.cart_local_pose.pose.orientation;
 
-    tpose_2.position.x = 0.0;
-    tpose_2.position.y = 0.0;
-    tpose_2.position.z = 0.06;
+//    tpose_2.position.x = 0.0;
+//    tpose_2.position.y = 0.0;
+//    tpose_2.position.z = 0.11;
+    tpose_2.position = tpose_1.position;
+    tpose_2.position.z -= 0.02;
     tpose_2.orientation = mid.cart_pose.pose.orientation;
 
     std::vector<geometry_msgs::Pose> waypoints_;
@@ -88,10 +94,10 @@ int main(int argc, char** argv) {
 
     // ### EVALUATE CARTESIAN PATH TO SMOOTH WITH STOMP ###
     moveit_msgs::RobotTrajectory trajectory;
-    double fraction = mid.move_group.computeCartesianPath(mid.waypoints, mid.eef_step, mid.jump_threshold, trajectory) * 100;
+    double fraction = mid.move_group.computeCartesianPath(waypoints_t, mid.eef_step, mid.jump_threshold, trajectory) * 100;
 
     // ### DEFINE GOAL POSE AND COMPILE MOTION PLAN REQUEST ###
-    moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(mid.waypoints.at(mid.waypoints.size()-1));
+    moveit_msgs::Constraints pose_goal_end = mid.computeGoalConstraint(waypoints_t.at(waypoints_t.size()-1));
     mid.compileMotionPlanRequest(pose_goal_end, trajectory);
 
     // SOLVE REQUEST
@@ -99,29 +105,49 @@ int main(int argc, char** argv) {
     context->setMotionPlanRequest(mid.req);
     context->solve(mid.res);
 
-    std::vector<sensor_msgs::JointState> joint_trajectory = mid.convertJointTrajectoryToJointState();
+//    std::vector<sensor_msgs::JointState> joint_trajectory = mid.convertJointTrajectoryToJointState();
     std::vector<geometry_msgs::Pose> pose_trajectory = mid.convertJointTrajectoryToCartesian();
     std::vector<geometry_msgs::Pose> pose_trajectory_trans = mid.transformTrajectory(pose_trajectory, mid.base_frame);
 
     // ### SHOW RESULT TRAJECTORY ###
     mid.displayResultTrajectory();
+    spinner.stop();
+    std::cout << "Counting down..." << std::endl;
+    std:: cout << "3" << std::endl;
+    // beep();
+    std::cout << '\b';
+    usleep(1e6);
+    std:: cout << "2" << std::endl;
+    // beep();
+    usleep(1e6);
+    std:: cout << "1" << std::endl;
+    std::cout << '\b';
+    // beep();
+    usleep(1e6);
+    std:: cout << "Go" << std::endl;
+    std::cout << '\b';
 
     // ### STOP SPINNER AND DEFINE NEW ROS SPINNER ###
-//    spinner.stop();
-//    ros::Rate r(20);
+    ros::Rate r(20);
 
     if(fraction > 95) {
         ROS_INFO("!!! Planning successful: %.03f percent of the trajectory is followed.", fraction);
         ROS_INFO("Publishing trajectory of %d points", (int) pose_trajectory.size());
 
         while (ros::ok()) {
-            for (int i = 0; i < pose_trajectory.size(); i++) {
+            for (int i = 0; i < pose_trajectory_trans.size() - 1; i++) {
+                Eigen::Vector3d v1(pose_trajectory_trans.at(i).position.x, pose_trajectory_trans.at(i).position.y, pose_trajectory_trans.at(i).position.z);
+                Eigen::Vector3d v2(pose_trajectory_trans.at(i+1).position.x, pose_trajectory_trans.at(i+1).position.y, pose_trajectory_trans.at(i+1).position.z);
+                std::cout << i << " out of " << pose_trajectory_trans.size() << std::endl;
+                // std::cout << (v1 - v2).squaredNorm() << std::endl;
+                std::cout << v1 << std::endl;
 
-//                mid.cartesian_pub.publish(pose_trajectory.at(i));
+
+                 mid.cartesian_pub.publish(pose_trajectory_trans.at(i));
                 // mid.joint_pub.publish(joint_trajectory.at(i));
 
                 ros::spinOnce();
-//                r.sleep();
+                r.sleep();
             }
             break;
         }

@@ -417,6 +417,7 @@ void MoveItDVRKPlanning::displayResultTrajectory(){
     planning_scene->setCurrentState(*robot_state.get());
 
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
+    visual_tools.publishAxisLabeled(MoveItDVRKPlanning::convertMatrixToPose(MoveItDVRKPlanning::invertHomoMatrix(convertPoseToMatrix(base_frame))), "camera_frame");
     for (int i = 0; i < waypoints.size(); i++){
         std::ostringstream goal_n;
         goal_n << "goal_" << i << std::endl;
@@ -453,10 +454,14 @@ Eigen::Matrix4d MoveItDVRKPlanning::invertHomoMatrix (Eigen::Matrix4d mat){
     Eigen::Vector4d tf_pos;
 
     tf_pos = -1 * mat.col(3);
+    tf_pos(3) = 1;
+
+
     tf_inv.block(0,0,3,3) = mat.block(0,0,3,3).transpose();
     tf_inv(3,3) = 1;
     // tf_inv.col(3) = tf_inv.block(0,0,3,3) * mat.block(0,3,3,1);
     tf_inv.col(3) = tf_inv * tf_pos;
+//    tf_inv(3,3) = 1;
 
     std::cout << "Input Matrix: \n" << mat << std::endl;
     std::cout << "tf_pose Matrix: \n" << tf_pos << std::endl;
@@ -524,7 +529,7 @@ std::vector<geometry_msgs::Pose> MoveItDVRKPlanning::transformTrajectory(std::ve
         Eigen::Matrix4d pos_mat = convertPoseToMatrix(traj[i]);
         Eigen::Matrix4d bf_mat = convertPoseToMatrix(base_frame);
 
-        Eigen::Matrix4d trans_mat = pos_mat * bf_mat;
+        Eigen::Matrix4d trans_mat =  bf_mat * pos_mat;
 
         geometry_msgs::Pose trans_pose = convertMatrixToPose(trans_mat);
 

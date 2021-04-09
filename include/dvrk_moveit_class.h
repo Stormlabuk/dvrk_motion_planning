@@ -40,7 +40,7 @@ public:
     planning_interface::MotionPlanResponse res; // MoveIt planning response
     float max_vel_scaling_factor;
     const double jump_threshold = 0.0;
-    const double eef_step = 0.001;              // max end effector step used during trajectory evaluation
+    const double eef_step = 0.0005;              // max end effector step used during trajectory evaluation
     geometry_msgs::Pose home_pose;              // home pose for the robot
     geometry_msgs::PoseStamped  cart_pose;      // current cartesian dVRK pose (API v1.x)
     geometry_msgs::PoseStamped cart_local_pose; // current local cartesian dVRK pose (API v1.x)
