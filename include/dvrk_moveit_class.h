@@ -47,6 +47,7 @@ public:
     geometry_msgs::TransformStamped cart2_pose; // current cartesian dVRK pose (API v2.x)
     sensor_msgs::JointState joint_pose;         // current joint dVRK pose
     geometry_msgs::Pose base_frame;             // Current set base frame
+
     // #####################
     // ### ROS PUBS/SUBS ###
     // #####################
@@ -55,7 +56,7 @@ public:
     ros::Publisher cartesian_pub;               // cartesian trajectory publisher
     ros::Publisher joint_pub;                   // joint trajectory publisher
     ros::Subscriber cp_sub;                     // DVRK arm cartesian position subscriber
-    ros::Subscriber cpl_sub;
+    ros::Subscriber cpl_sub;                    // DVRK arm cartesian local position subscriber
     ros::Subscriber js_sub;                     // DVRK arm joint state subscriber
     ros::Subscriber bf_sub;                     // Base frame subscriber
 

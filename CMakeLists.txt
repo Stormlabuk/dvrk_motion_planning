@@ -53,3 +53,6 @@ target_link_libraries(full_planning ${catkin_LIBRARIES})
 
 add_executable(dvrk_planexe src/dvrk_planexe.cpp src/dvrk_moveit_class.cpp)
 target_link_libraries(dvrk_planexe ${catkin_LIBRARIES})
+
+add_executable(dvrk_test src/dvrk_test.cpp src/dvrk_moveit_class.cpp)
+target_link_libraries(dvrk_test ${catkin_LIBRARIES})

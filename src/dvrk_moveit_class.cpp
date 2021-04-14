@@ -176,15 +176,15 @@ MoveItDVRKPlanning::MoveItDVRKPlanning(std::string arm, int version){
     dvrk_version = version;
     arm_name = arm;
 
-    home_pose.position.x = 0.02;
-    home_pose.position.y = 0.02;
-    home_pose.position.z = -0.09;
-//    home_pose.orientation.x = 1;
-
-    home_pose.orientation.x = -0.7071068;
-    home_pose.orientation.y = 0;
-    home_pose.orientation.z = 0;
-    home_pose.orientation.w = 0.7071068;
+//    home_pose.position.x = 0.02;
+//    home_pose.position.y = 0.02;
+//    home_pose.position.z = -0.09;
+////    home_pose.orientation.x = 1;
+//
+//    home_pose.orientation.x = -0.7071068;
+//    home_pose.orientation.y = 0;
+//    home_pose.orientation.z = 0;
+//    home_pose.orientation.w = 0.7071068;
 }
 
 MoveItDVRKPlanning::~MoveItDVRKPlanning()= default;
@@ -441,6 +441,8 @@ void MoveItDVRKPlanning::checkWaypointsValidity(std::vector<geometry_msgs::Pose>
     ROS_INFO("Waypoints pose validity check:");
 
     for (int i = 0; i< wp_vector.size(); i++){
+        std::cout << "Waypoint " << i << std::endl;
+        std::cout << wp_vector.at(i) << std::endl;
         if(move_group.setJointValueTarget(wp_vector.at(i),"psm_tool_tip_link")){
             ROS_INFO("Waypoints #%d: VALID", i);
         } else{ ROS_ERROR("!!! Waypoints #%d: INVALID",i);}
@@ -472,11 +474,14 @@ Eigen::Matrix4d MoveItDVRKPlanning::invertHomoMatrix (Eigen::Matrix4d mat){
 
 void MoveItDVRKPlanning::checkPoseValidity(geometry_msgs::Pose pose){
 
+    std::cout << "Startpoint " << std::endl;
+    std::cout << pose << std::endl;
     ROS_INFO("Pose validity check:");
 //    string pose_name = GET_VARIABLE_NAME(pose);
         if(move_group.setJointValueTarget(pose,"psm_tool_tip_link")){
             ROS_INFO("Pose %s: VALID", GET_VARIABLE_NAME(pose));
-        } else{ ROS_ERROR("!!! Pose %s: INVALID",GET_VARIABLE_NAME(pose));}
+        } else{ ROS_ERROR("!!! Pose %s: INVALID",GET_VARIABLE_NAME(pose));
+        }
 
 }
 
