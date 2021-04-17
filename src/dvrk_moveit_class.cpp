@@ -417,11 +417,12 @@ void MoveItDVRKPlanning::displayResultTrajectory(){
     planning_scene->setCurrentState(*robot_state.get());
 
     visual_tools.publishRobotState(planning_scene->getCurrentStateNonConst(), rviz_visual_tools::GREEN);
-    visual_tools.publishAxisLabeled(MoveItDVRKPlanning::convertMatrixToPose(MoveItDVRKPlanning::invertHomoMatrix(convertPoseToMatrix(base_frame))), "camera_frame");
+//    visual_tools.publishAxisLabeled(MoveItDVRKPlanning::convertMatrixToPose(MoveItDVRKPlanning::invertHomoMatrix(convertPoseToMatrix(base_frame))), "camera_frame");
     for (int i = 0; i < waypoints.size(); i++){
         std::ostringstream goal_n;
         goal_n << "goal_" << i << std::endl;
-        visual_tools.publishAxisLabeled(waypoints.at(i), goal_n.str());
+        visual_tools.publishAxis(waypoints.at(i), rviz_visual_tools::XXSMALL);
+//        visual_tools.publishText(waypoints.at(i), goal_n.str(), );
         goal_n.clear();
     }
     visual_tools.trigger();
@@ -465,9 +466,9 @@ Eigen::Matrix4d MoveItDVRKPlanning::invertHomoMatrix (Eigen::Matrix4d mat){
     tf_inv.col(3) = tf_inv * tf_pos;
 //    tf_inv(3,3) = 1;
 
-    std::cout << "Input Matrix: \n" << mat << std::endl;
-    std::cout << "tf_pose Matrix: \n" << tf_pos << std::endl;
-    std::cout << "tf_inv Matrix: \n" << tf_inv << std::endl;
+//    std::cout << "Input Matrix: \n" << mat << std::endl;
+//    std::cout << "tf_pose Matrix: \n" << tf_pos << std::endl;
+//    std::cout << "tf_inv Matrix: \n" << tf_inv << std::endl;
 
     return tf_inv;
 }

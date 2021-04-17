@@ -39,9 +39,9 @@ int main(int argc, char** argv) {
     // ############################### COLLISION AVOIDANCE #######################
     geometry_msgs::Pose mwp;
 
-    mwp.position.x = -0.07;
-    mwp.position.y = 0.05;
-    mwp.position.z = -0.035;
+    mwp.position.x = -0.0604503683894;
+    mwp.position.y = -0.0483394474016;
+    mwp.position.z = -0.163942101578;
     mwp.orientation = mid.home_pose.orientation;
     mid.waypoints.push_back(mwp);
 
@@ -63,14 +63,15 @@ int main(int argc, char** argv) {
     shape_msgs::SolidPrimitive primitive;
     primitive.type = primitive.SPHERE;
     primitive.dimensions.resize(3);
-    primitive.dimensions[0] = 0.005;
-    primitive.dimensions[1] = 0.005;
-    primitive.dimensions[2] = 0.005;
+    primitive.dimensions[0] = 0.02;
+    primitive.dimensions[1] = 0.02;
+    primitive.dimensions[2] = 0.02;
 
     geometry_msgs::Pose sph_pose;
-    sph_pose.position.x = -0.02;
-    sph_pose.position.y = 0.07;
-    sph_pose.position.z = -0.065;
+
+    sph_pose.position.x = -0.0604503683894;
+    sph_pose.position.y = -0.0483394474016;
+    sph_pose.position.z = -0.163942101578;
     sph_pose.orientation.w = 1.0;
 
     collision_object.primitives.push_back(primitive);

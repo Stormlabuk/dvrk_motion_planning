@@ -12,6 +12,17 @@
 #include <tf2_msgs/TFMessage.h>
 
 Eigen::Matrix4d tf_cam_aruco;
+//const Eigen::Vector4d p1_cb(0.066, 0.035, 0.03, 1);
+//const Eigen::Vector4d p2_cb(0.105, 0.004, 0.05, 1);
+//const Eigen::Vector4d p3_cb(0.08, -0.022, 0.035, 1);
+//const Eigen::Vector4d p4_cb(0.05, -0.01, 0.04, 1);
+//const Eigen::Vector4d p_offset(0, 0, 0.005, 0);
+//
+//const Eigen::Vector4d p1_cb_offset(-0.005, 0.015, 0.012, 0);
+//const Eigen::Vector4d p2_cb_offset(-0.01, 0.02, 0.01, 0);
+//const Eigen::Vector4d p3_cb_offset(0.002, 0.017, 0.007, 0);
+//const Eigen::Vector4d p4_cb_offset(0.0, 0.0, 0.0, 0);
+
 const Eigen::Vector4d p1_cb(0.066, 0.035, 0.03, 1);
 const Eigen::Vector4d p2_cb(0.105, 0.004, 0.05, 1);
 const Eigen::Vector4d p3_cb(0.08, -0.022, 0.035, 1);
@@ -39,16 +50,26 @@ Eigen::Matrix4d tf_des_cam;
 bool tf_recvd = false;
 
 void init_tf_aruco_tfs(){
-    tf_aruco_cb << 1, 0, 0, 0, 0, 0.5, 0.866025, -0.04596, 0, -0.866025, 0.5, -0.0230718, 0, 0, 0, 1;
+// tf_aruco_cb << 1, 0, 0, 0, 0, 0.5, 0.866025, -0.04596, 0, -0.866025, 0.5, -0.0230718, 0, 0, 0, 1;
+    tf_aruco_cb << 1, 0, 0, -0.065, 0, 1, 0, 0.056, 0, 0, 1, 0, 0, 0, 0, 1;
     tf_des_cb << -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1;
 
     tf_des_cam = tf_cam_aruco * tf_aruco_cb * tf_des_cb;
     std::cout << "tf_aruco_cb\n" << tf_aruco_cb << std::endl;
+//
+//    p1_aruco = tf_aruco_cb * (p1_cb + p_offset - p1_cb_offset);
+//    p2_aruco = tf_aruco_cb * (p2_cb + p_offset - p2_cb_offset);
+//    p3_aruco = tf_aruco_cb * (p3_cb + p_offset - p3_cb_offset);
+//    p4_aruco = tf_aruco_cb * (p4_cb + p_offset - p4_cb_offset);
 
     p1_aruco = tf_aruco_cb * (p1_cb + p_offset);
     p2_aruco = tf_aruco_cb * (p2_cb + p_offset);
     p3_aruco = tf_aruco_cb * (p3_cb + p_offset);
     p4_aruco = tf_aruco_cb * (p4_cb + p_offset);
+
+//    p3_aruco.setZero();
+//    p3_aruco(2) = 0.05;
+//    p3_aruco(3) = 1;
 
     p1_cam = tf_cam_aruco * p1_aruco;
     p2_cam = tf_cam_aruco * p2_aruco;
@@ -149,10 +170,10 @@ int main(int argc, char** argv) {
     mid.checkPoseValidity(mid.cart_local_pose.pose);
 
     std::vector<geometry_msgs::Pose> waypoints_;
-    waypoints_.push_back(pose_1);
-    waypoints_.push_back(pose_2);
-    waypoints_.push_back(pose_3);
     waypoints_.push_back(pose_4);
+//    waypoints_.push_back(pose_1);
+    waypoints_.push_back(pose_3);
+    waypoints_.push_back(pose_2);
 
     geometry_msgs::Pose inv_pose = MoveItDVRKPlanning::convertMatrixToPose(MoveItDVRKPlanning::invertHomoMatrix(mid.convertPoseToMatrix(mid.base_frame)));
     std::vector<geometry_msgs::Pose> waypoints_t = mid.transformTrajectory(waypoints_, inv_pose);
@@ -162,11 +183,11 @@ int main(int argc, char** argv) {
 
     std::cout << "tf_des_cam\n" << MoveItDVRKPlanning::convertPoseToMatrix(inv_pose) * tf_des_cam << std::endl;
 
-
-    mid.waypoints.at(0).orientation = mid.cart_local_pose.pose.orientation;
-    mid.waypoints.at(1).orientation = mid.cart_local_pose.pose.orientation;
-    mid.waypoints.at(2).orientation = mid.cart_local_pose.pose.orientation;
-    mid.waypoints.at(3).orientation = mid.cart_local_pose.pose.orientation;
+    for(int i =0; i < mid.waypoints.size(); i++){
+    mid.waypoints.at(i).orientation = mid.cart_local_pose.pose.orientation;}
+//    mid.waypoints.at(1).orientation = mid.cart_local_pose.pose.orientation;
+//    mid.waypoints.at(2).orientation = mid.cart_local_pose.pose.orientation;
+//    mid.waypoints.at(3).orientation = mid.cart_local_pose.pose.orientation;
 
 //    while(true){
 //        std::cout << mid.cart_local_pose.pose << std::endl;
@@ -219,6 +240,14 @@ int main(int argc, char** argv) {
     std::vector<geometry_msgs::Pose> pose_trajectory = mid.convertJointTrajectoryToCartesian();
     std::vector<geometry_msgs::Pose> pose_trajectory_trans = mid.transformTrajectory(pose_trajectory, mid.base_frame);
 
+    Eigen::Matrix4d tf_psm1_cam = MoveItDVRKPlanning::convertPoseToMatrix(inv_pose);
+    std::cout << "tf_psm1_cam" << std::endl;
+    std::cout << tf_psm1_cam << std::endl;
+    Eigen::Matrix4d tf_psm1_cb = tf_psm1_cam * tf_cam_aruco * tf_aruco_cb;
+    Eigen::Matrix4d tf_cb_psm1 = MoveItDVRKPlanning::invertHomoMatrix(tf_psm1_cb);
+    std::cout << "tf_cb_psm1" << std::endl;
+    std::cout << tf_cb_psm1 << std::endl;
+
     // ### SHOW RESULT TRAJECTORY ###
     mid.displayResultTrajectory();
     spinner.stop();
@@ -250,7 +279,10 @@ int main(int argc, char** argv) {
                 Eigen::Vector3d v2(pose_trajectory_trans.at(i+1).position.x, pose_trajectory_trans.at(i+1).position.y, pose_trajectory_trans.at(i+1).position.z);
                 std::cout << i << " out of " << pose_trajectory_trans.size()-2 << std::endl;
                 // std::cout << (v1 - v2).squaredNorm() << std::endl;
-                std::cout << v1 << std::endl;
+                Eigen::Vector4d v1_ (v1(0),v1(1),v1(2),1);
+                Eigen::Vector4d v1cazzo = tf_cb_psm1 * v1_;
+                std::cout << v1cazzo << std::endl;
+                std::cout << "------------" << std::endl;
 
                  mid.cartesian_pub.publish(pose_trajectory_trans.at(i));
                 // mid.joint_pub.publish(joint_trajectory.at(i));

@@ -59,12 +59,15 @@ int main(int argc, char** argv) {
     mid.checkPoseValidity(mid.cart_local_pose.pose);
     geometry_msgs::Pose tpose_1;
     geometry_msgs::Pose tpose_2;
+    geometry_msgs::Pose tpose_3;
 
 //    tpose_1.position.x = 0.0;
 //    tpose_1.position.y = 0.0;
 //    tpose_1.position.z = 0.09;
     tpose_1.position = mid.cart_pose.pose.position;
-    tpose_1.position.z += 0.02;
+    tpose_1.position.x = 0.0;
+    tpose_1.position.y = 0.0;
+    tpose_1.position.z = 0.08;
     tpose_1.orientation = mid.cart_pose.pose.orientation;
 //    tpose_1.orientation = mid.cart_local_pose.pose.orientation;
 
@@ -72,18 +75,59 @@ int main(int argc, char** argv) {
 //    tpose_2.position.y = 0.0;
 //    tpose_2.position.z = 0.11;
     tpose_2.position = tpose_1.position;
-    tpose_2.position.z -= 0.02;
+    tpose_2.position.x = 0.0;
+    tpose_2.position.y = 0.0;
+    tpose_2.position.z += 0.08;
     tpose_2.orientation = mid.cart_pose.pose.orientation;
 
+    tpose_3.position = tpose_2.position;
+    tpose_3.position.x = 0.0;
+    tpose_3.position.y = 0.0;
+    tpose_3.position.z -= 0.08;
+    tpose_3.orientation = mid.cart_pose.pose.orientation;
+
+//    tpose_3.position = tpose_1.position;
+//    tpose_3.position.x += 0.02;
+//    tpose_3.orientation = mid.cart_pose.pose.orientation;
+
     std::vector<geometry_msgs::Pose> waypoints_;
+
+
     waypoints_.push_back(tpose_1);
     waypoints_.push_back(tpose_2);
+    waypoints_.push_back(tpose_3);
 
     geometry_msgs::Pose inv_pose = MoveItDVRKPlanning::convertMatrixToPose(MoveItDVRKPlanning::invertHomoMatrix(mid.convertPoseToMatrix(mid.base_frame)));
     std::vector<geometry_msgs::Pose> waypoints_t = mid.transformTrajectory(waypoints_, inv_pose);
 
+    waypoints_t.at(0).orientation = mid.cart_local_pose.pose.orientation;
+    waypoints_t.at(1).orientation = mid.cart_local_pose.pose.orientation;
+    waypoints_t.at(2).orientation = mid.cart_local_pose.pose.orientation;
+
     std::cout << waypoints_t.at(0) << std::endl;
     std::cout << waypoints_t.at(1) << std::endl;
+    std::cout << waypoints_t.at(2) << std::endl;
+
+//    std::vector<geometry_msgs::Pose> startpoint_;
+
+//    startpoint_.push_back(mid.cart_local_pose.pose);
+//    mid.checkWaypointsValidity(startpoint_);
+
+//    std::cout << (mid.cart_local_pose.pose.position.x - waypoints_t.at(0).position.x) << "\n"
+//            << (mid.cart_local_pose.pose.position.y - waypoints_t.at(0).position.y) << "\n"
+//            << (mid.cart_local_pose.pose.position.z - waypoints_t.at(0).position.z) << "\n"
+//            << (mid.cart_local_pose.pose.orientation.x - waypoints_t.at(0).orientation.x) << "\n"
+//            << (mid.cart_local_pose.pose.orientation.y - waypoints_t.at(0).orientation.y) << "\n"
+//            << (mid.cart_local_pose.pose.orientation.z - waypoints_t.at(0).orientation.z) << "\n"
+//            << (mid.cart_local_pose.pose.orientation.w - waypoints_t.at(0).orientation.w) << "\n" << std::endl;
+//
+//    std::cout << (mid.cart_local_pose.pose.position.x - waypoints_t.at(1).position.x) << "\n"
+//              << (mid.cart_local_pose.pose.position.y - waypoints_t.at(1).position.y) << "\n"
+//              << (mid.cart_local_pose.pose.position.z - waypoints_t.at(1).position.z) << "\n"
+//              << (mid.cart_local_pose.pose.orientation.x - waypoints_t.at(1).orientation.x) << "\n"
+//              << (mid.cart_local_pose.pose.orientation.y - waypoints_t.at(1).orientation.y) << "\n"
+//              << (mid.cart_local_pose.pose.orientation.z - waypoints_t.at(1).orientation.z) << "\n"
+//              << (mid.cart_local_pose.pose.orientation.w - waypoints_t.at(1).orientation.w) << std::endl;
 
     mid.checkWaypointsValidity(waypoints_t);
 
@@ -138,10 +182,9 @@ int main(int argc, char** argv) {
             for (int i = 0; i < pose_trajectory_trans.size() - 1; i++) {
                 Eigen::Vector3d v1(pose_trajectory_trans.at(i).position.x, pose_trajectory_trans.at(i).position.y, pose_trajectory_trans.at(i).position.z);
                 Eigen::Vector3d v2(pose_trajectory_trans.at(i+1).position.x, pose_trajectory_trans.at(i+1).position.y, pose_trajectory_trans.at(i+1).position.z);
-                std::cout << i << " out of " << pose_trajectory_trans.size() << std::endl;
+                std::cout << i << " out of " << pose_trajectory_trans.size()-2 << std::endl;
                 // std::cout << (v1 - v2).squaredNorm() << std::endl;
                 std::cout << v1 << std::endl;
-
 
                  mid.cartesian_pub.publish(pose_trajectory_trans.at(i));
                 // mid.joint_pub.publish(joint_trajectory.at(i));
