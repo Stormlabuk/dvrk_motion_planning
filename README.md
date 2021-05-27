@@ -1,4 +1,4 @@
-# Lumen_detection
+# DVRK Motion Planning
 ### Author: 
 Aleks Attanasio & Nils Marahrens, University of Leeds, UK, STORM Lab
 ### Date: 
